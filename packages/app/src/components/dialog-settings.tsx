@@ -128,6 +128,8 @@ function ProviderDetailView(props: { providerID: string; providerName: string; o
   const platform = usePlatform()
   const dialog = useDialog()
   const [switching, setSwitching] = createSignal<string | null>(null)
+  const [deleting, setDeleting] = createSignal<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = createSignal<string | null>(null)
 
   const [usage, { refetch }] = createResource(async () => {
     const result = await globalSDK.client.auth.usage({})
@@ -151,6 +153,32 @@ function ProviderDetailView(props: { providerID: string; providerName: string; o
       console.error("Failed to switch account:", e)
     } finally {
       setSwitching(null)
+    }
+  }
+
+  const deleteAccount = async (recordID: string) => {
+    setDeleting(recordID)
+    try {
+      const doFetch = platform.fetch ?? fetch
+      const response = await doFetch(`${globalSDK.url}/auth/account`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ providerID: props.providerID, recordID }),
+      })
+      if (response.ok) {
+        const result = await response.json()
+        if (result.remaining === 0) {
+          // Provider was disconnected, go back to list
+          props.onBack()
+        } else {
+          await refetch()
+        }
+      }
+    } catch (e) {
+      console.error("Failed to delete account:", e)
+    } finally {
+      setDeleting(null)
+      setConfirmDelete(null)
     }
   }
 
@@ -239,40 +267,84 @@ function ProviderDetailView(props: { providerID: string; providerName: string; o
                       return secs > 60 ? `${Math.ceil(secs / 60)}m` : `${secs}s`
                     }
                     const isSwitching = () => switching() === account.id
+                    const isDeleting = () => deleting() === account.id
+                    const isConfirming = () => confirmDelete() === account.id
                     const canSwitch = () =>
                       data().accounts.length > 1 && !account.isActive && !isSwitching() && support?.supported
 
                     return (
-                      <button
-                        type="button"
-                        disabled={!canSwitch() && !account.isActive}
-                        onClick={() => canSwitch() && switchAccount(account.id)}
-                        class="flex items-center justify-between p-2 rounded-md text-left transition-all"
+                      <div
+                        class="flex items-center gap-2 p-2 rounded-md transition-all"
                         classList={{
-                          "bg-surface-base hover:bg-surface-base-hover cursor-pointer": canSwitch(),
-                          "bg-surface-base opacity-60": !canSwitch() && !account.isActive,
+                          "bg-surface-base": !account.isActive,
                           "bg-fill-success-ghost border border-fill-success-base": account.isActive,
                         }}
                       >
-                        <div class="flex items-center gap-2">
-                          <Show when={isSwitching()}>
-                            <Spinner class="size-3" />
-                          </Show>
-                          <span class="text-12-medium text-text-base">
-                            Account {index() + 1}
-                            <Show when={account.label && account.label !== "default"}>
-                              <span class="text-text-muted"> ({account.label})</span>
+                        <button
+                          type="button"
+                          disabled={!canSwitch() && !account.isActive}
+                          onClick={() => canSwitch() && switchAccount(account.id)}
+                          class="flex-1 flex items-center justify-between text-left transition-all"
+                          classList={{
+                            "hover:opacity-80 cursor-pointer": canSwitch(),
+                            "opacity-60": !canSwitch() && !account.isActive,
+                          }}
+                        >
+                          <div class="flex items-center gap-2">
+                            <Show when={isSwitching()}>
+                              <Spinner class="size-3" />
                             </Show>
-                          </span>
-                          <Show when={account.isActive}>
-                            <span class="text-10-medium text-fill-success-base">Active</span>
-                          </Show>
-                          <Show when={isInCooldown()}>
-                            <span class="text-10-medium text-fill-danger-base">Cooldown {cooldownRemaining()}</span>
-                          </Show>
-                        </div>
-                        <span class="text-11-regular text-text-muted">{account.health.successCount} requests</span>
-                      </button>
+                            <span class="text-12-medium text-text-base">
+                              Account {index() + 1}
+                              <Show when={account.label && account.label !== "default"}>
+                                <span class="text-text-muted"> ({account.label})</span>
+                              </Show>
+                            </span>
+                            <Show when={account.isActive}>
+                              <span class="text-10-medium text-fill-success-base">Active</span>
+                            </Show>
+                            <Show when={isInCooldown()}>
+                              <span class="text-10-medium text-fill-danger-base">Cooldown {cooldownRemaining()}</span>
+                            </Show>
+                          </div>
+                          <span class="text-11-regular text-text-muted">{account.health.successCount} requests</span>
+                        </button>
+                        {/* Delete button */}
+                        <Show when={isConfirming()}>
+                          <div class="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => deleteAccount(account.id)}
+                              disabled={isDeleting()}
+                              class="px-2 py-1 rounded text-10-medium bg-fill-danger-base text-white hover:bg-fill-danger-strong transition-colors disabled:opacity-50"
+                            >
+                              <Show when={isDeleting()} fallback="Confirm">
+                                <Spinner class="size-3" />
+                              </Show>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDelete(null)}
+                              class="px-2 py-1 rounded text-10-medium bg-fill-ghost-strong text-text-base hover:bg-fill-ghost-base transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </Show>
+                        <Show when={!isConfirming()}>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setConfirmDelete(account.id)
+                            }}
+                            class="p-1 rounded hover:bg-fill-danger-ghost text-icon-muted hover:text-fill-danger-base transition-colors"
+                            title="Remove account"
+                          >
+                            <Icon name="close" class="size-4" />
+                          </button>
+                        </Show>
+                      </div>
                     )
                   }}
                 </For>
