@@ -9,8 +9,12 @@ import type {
   AppLogResponses,
   AppSkillsResponses,
   Auth as Auth3,
+  AuthSetActiveErrors,
+  AuthSetActiveResponses,
   AuthSetErrors,
   AuthSetResponses,
+  AuthUsageErrors,
+  AuthUsageResponses,
   CommandListResponses,
   Config as Config2,
   ConfigGetResponses,
@@ -2740,6 +2744,103 @@ export class Tui extends HeyApiClient {
   }
 }
 
+export class Auth2 extends HeyApiClient {
+  /**
+   * Get auth usage
+   *
+   * Get rate limit and usage information for authenticated providers.
+   */
+  public usage<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams([parameters], [{ args: [{ in: "query", key: "directory" }] }])
+    return (options?.client ?? this.client).get<AuthUsageResponses, AuthUsageErrors, ThrowOnError>({
+      url: "/auth/usage",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Set active OAuth account
+   *
+   * Set the active OAuth account for a provider. This account will be used for requests until rate limited.
+   */
+  public setActive<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      providerID?: string
+      recordID?: string
+      namespace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "body", key: "providerID" },
+            { in: "body", key: "recordID" },
+            { in: "body", key: "namespace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<AuthSetActiveResponses, AuthSetActiveErrors, ThrowOnError>({
+      url: "/auth/active",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+
+  /**
+   * Set auth credentials
+   *
+   * Set authentication credentials
+   */
+  public set<ThrowOnError extends boolean = false>(
+    parameters: {
+      providerID: string
+      directory?: string
+      auth?: Auth3
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "providerID" },
+            { in: "query", key: "directory" },
+            { key: "auth", map: "body" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).put<AuthSetResponses, AuthSetErrors, ThrowOnError>({
+      url: "/auth/{providerID}",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+}
+
 export class Instance extends HeyApiClient {
   /**
    * Dispose instance
@@ -2949,45 +3050,6 @@ export class Formatter extends HeyApiClient {
   }
 }
 
-export class Auth2 extends HeyApiClient {
-  /**
-   * Set auth credentials
-   *
-   * Set authentication credentials
-   */
-  public set<ThrowOnError extends boolean = false>(
-    parameters: {
-      providerID: string
-      directory?: string
-      auth?: Auth3
-    },
-    options?: Options<never, ThrowOnError>,
-  ) {
-    const params = buildClientParams(
-      [parameters],
-      [
-        {
-          args: [
-            { in: "path", key: "providerID" },
-            { in: "query", key: "directory" },
-            { key: "auth", map: "body" },
-          ],
-        },
-      ],
-    )
-    return (options?.client ?? this.client).put<AuthSetResponses, AuthSetErrors, ThrowOnError>({
-      url: "/auth/{providerID}",
-      ...options,
-      ...params,
-      headers: {
-        "Content-Type": "application/json",
-        ...options?.headers,
-        ...params.headers,
-      },
-    })
-  }
-}
-
 export class Event extends HeyApiClient {
   /**
    * Subscribe to events
@@ -3097,6 +3159,11 @@ export class OpencodeClient extends HeyApiClient {
     return (this._tui ??= new Tui({ client: this.client }))
   }
 
+  private _auth?: Auth2
+  get auth(): Auth2 {
+    return (this._auth ??= new Auth2({ client: this.client }))
+  }
+
   private _instance?: Instance
   get instance(): Instance {
     return (this._instance ??= new Instance({ client: this.client }))
@@ -3130,11 +3197,6 @@ export class OpencodeClient extends HeyApiClient {
   private _formatter?: Formatter
   get formatter(): Formatter {
     return (this._formatter ??= new Formatter({ client: this.client }))
-  }
-
-  private _auth?: Auth2
-  get auth(): Auth2 {
-    return (this._auth ??= new Auth2({ client: this.client }))
   }
 
   private _event?: Event

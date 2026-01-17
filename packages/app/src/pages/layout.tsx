@@ -62,7 +62,7 @@ import { ConstrainDragXAxis } from "@/utils/solid-dnd"
 import { navStart } from "@/utils/perf"
 import { DialogSelectDirectory } from "@/components/dialog-select-directory"
 import { DialogEditProject } from "@/components/dialog-edit-project"
-import { DialogAuthUsage } from "@/components/dialog-auth-usage"
+import { DialogSettings } from "@/components/dialog-settings"
 import { Titlebar } from "@/components/titlebar"
 import { useServer } from "@/context/server"
 
@@ -1574,12 +1574,12 @@ export default function Layout(props: ParentProps) {
             </DragDropProvider>
           </div>
           <div class="shrink-0 w-full pt-3 pb-3 flex flex-col items-center gap-2">
-            <Tooltip placement={sidebarProps.mobile ? "bottom" : "right"} value="Rate Limits & Usage">
+            <Tooltip placement={sidebarProps.mobile ? "bottom" : "right"} value="Settings">
               <IconButton
-                icon="checklist"
+                icon="settings-gear"
                 variant="ghost"
                 size="large"
-                onClick={() => dialog.show(() => <DialogAuthUsage />)}
+                onClick={() => dialog.show(() => <DialogSettings />)}
               />
             </Tooltip>
             <Tooltip placement={sidebarProps.mobile ? "bottom" : "right"} value="Help">

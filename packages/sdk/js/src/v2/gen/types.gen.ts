@@ -47,6 +47,69 @@ export type EventServerInstanceDisposed = {
   }
 }
 
+export type EventTuiPromptAppend = {
+  type: "tui.prompt.append"
+  properties: {
+    text: string
+  }
+}
+
+export type EventTuiCommandExecute = {
+  type: "tui.command.execute"
+  properties: {
+    command:
+      | "session.list"
+      | "session.new"
+      | "session.share"
+      | "session.interrupt"
+      | "session.compact"
+      | "session.page.up"
+      | "session.page.down"
+      | "session.half.page.up"
+      | "session.half.page.down"
+      | "session.first"
+      | "session.last"
+      | "prompt.clear"
+      | "prompt.submit"
+      | "agent.cycle"
+      | string
+  }
+}
+
+export type EventTuiToastShow = {
+  type: "tui.toast.show"
+  properties: {
+    title?: string
+    message: string
+    variant: "info" | "success" | "warning" | "error"
+    /**
+     * Duration in milliseconds
+     */
+    duration?: number
+  }
+}
+
+export type EventTuiSessionSelect = {
+  type: "tui.session.select"
+  properties: {
+    /**
+     * Session ID to navigate to
+     */
+    sessionID: string
+  }
+}
+
+export type EventCredentialFailover = {
+  type: "credential.failover"
+  properties: {
+    providerID: string
+    fromRecordID: string
+    toRecordID?: string
+    statusCode: number
+    message: string
+  }
+}
+
 export type EventLspClientDiagnostics = {
   type: "lsp.client.diagnostics"
   properties: {
@@ -633,58 +696,6 @@ export type EventTodoUpdated = {
   }
 }
 
-export type EventTuiPromptAppend = {
-  type: "tui.prompt.append"
-  properties: {
-    text: string
-  }
-}
-
-export type EventTuiCommandExecute = {
-  type: "tui.command.execute"
-  properties: {
-    command:
-      | "session.list"
-      | "session.new"
-      | "session.share"
-      | "session.interrupt"
-      | "session.compact"
-      | "session.page.up"
-      | "session.page.down"
-      | "session.half.page.up"
-      | "session.half.page.down"
-      | "session.first"
-      | "session.last"
-      | "prompt.clear"
-      | "prompt.submit"
-      | "agent.cycle"
-      | string
-  }
-}
-
-export type EventTuiToastShow = {
-  type: "tui.toast.show"
-  properties: {
-    title?: string
-    message: string
-    variant: "info" | "success" | "warning" | "error"
-    /**
-     * Duration in milliseconds
-     */
-    duration?: number
-  }
-}
-
-export type EventTuiSessionSelect = {
-  type: "tui.session.select"
-  properties: {
-    /**
-     * Session ID to navigate to
-     */
-    sessionID: string
-  }
-}
-
 export type EventMcpToolsChanged = {
   type: "mcp.tools.changed"
   properties: {
@@ -862,6 +873,11 @@ export type Event =
   | EventInstallationUpdateAvailable
   | EventProjectUpdated
   | EventServerInstanceDisposed
+  | EventTuiPromptAppend
+  | EventTuiCommandExecute
+  | EventTuiToastShow
+  | EventTuiSessionSelect
+  | EventCredentialFailover
   | EventLspClientDiagnostics
   | EventLspUpdated
   | EventFileEdited
@@ -878,10 +894,6 @@ export type Event =
   | EventQuestionRejected
   | EventSessionCompacted
   | EventTodoUpdated
-  | EventTuiPromptAppend
-  | EventTuiCommandExecute
-  | EventTuiToastShow
-  | EventTuiSessionSelect
   | EventMcpToolsChanged
   | EventMcpBrowserOpenFailed
   | EventCommandExecuted
@@ -1473,6 +1485,31 @@ export type ProviderConfig = {
   }
   whitelist?: Array<string>
   blacklist?: Array<string>
+  /**
+   * OAuth rotation settings
+   */
+  oauth?: {
+    /**
+     * Rate limit cooldown in milliseconds
+     */
+    rateLimitCooldownMs?: number
+    /**
+     * Auth failure cooldown in milliseconds
+     */
+    authFailureCooldownMs?: number
+    /**
+     * Network retry attempts per OAuth credential before failing
+     */
+    networkRetryAttempts?: number
+    /**
+     * Maximum OAuth credential attempts per request
+     */
+    maxAttempts?: number
+    /**
+     * Failover toast duration in milliseconds
+     */
+    toastDurationMs?: number
+  }
   options?: {
     apiKey?: string
     baseURL?: string
@@ -2039,6 +2076,8 @@ export type McpStatus =
   | McpStatusFailed
   | McpStatusNeedsAuth
   | McpStatusNeedsClientRegistration
+
+export type AuthUsage = unknown
 
 export type Path = {
   home: string
@@ -4566,6 +4605,67 @@ export type TuiControlResponseResponses = {
 }
 
 export type TuiControlResponseResponse = TuiControlResponseResponses[keyof TuiControlResponseResponses]
+
+export type AuthUsageData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+  }
+  url: "/auth/usage"
+}
+
+export type AuthUsageErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type AuthUsageError = AuthUsageErrors[keyof AuthUsageErrors]
+
+export type AuthUsageResponses = {
+  /**
+   * Usage information per provider and account
+   */
+  200: AuthUsage
+}
+
+export type AuthUsageResponse = AuthUsageResponses[keyof AuthUsageResponses]
+
+export type AuthSetActiveData = {
+  body?: {
+    providerID: string
+    recordID: string
+    namespace?: string
+  }
+  path?: never
+  query?: {
+    directory?: string
+  }
+  url: "/auth/active"
+}
+
+export type AuthSetActiveErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type AuthSetActiveError = AuthSetActiveErrors[keyof AuthSetActiveErrors]
+
+export type AuthSetActiveResponses = {
+  /**
+   * Active account updated
+   */
+  200: {
+    success: boolean
+    anthropicUsage?: unknown
+  }
+}
+
+export type AuthSetActiveResponse = AuthSetActiveResponses[keyof AuthSetActiveResponses]
 
 export type InstanceDisposeData = {
   body?: never
