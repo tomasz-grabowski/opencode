@@ -9,6 +9,7 @@ import { Plugin } from "../plugin"
 import { ModelsDev } from "./models"
 import { NamedError } from "@opencode-ai/util/error"
 import { Auth } from "../auth"
+import { createOAuthRotatingFetch } from "../auth/rotating-fetch"
 import { Env } from "../env"
 import { Instance } from "../project/instance"
 import { Flag } from "../flag/flag"
@@ -963,6 +964,7 @@ export namespace Provider {
         providerID: model.providerID,
       })
       const s = await state()
+      const config = await Config.get()
       const provider = s.providers[model.providerID]
       const options = { ...provider.options }
 
@@ -978,13 +980,13 @@ export namespace Provider {
           ...model.headers,
         }
 
-      const key = Bun.hash.xxHash32(JSON.stringify({ npm: model.api.npm, options }))
+      const key = Bun.hash.xxHash32(JSON.stringify({ providerID: model.providerID, npm: model.api.npm, options }))
       const existing = s.sdk.get(key)
       if (existing) return existing
 
       const customFetch = options["fetch"]
 
-      options["fetch"] = async (input: any, init?: BunFetchRequestInit) => {
+      const fetchWithTimeout = async (input: any, init?: BunFetchRequestInit) => {
         // Preserve custom fetch if it exists, wrap it with timeout logic
         const fetchFn = customFetch ?? fetch
         const opts = init ?? {}
@@ -1023,6 +1025,16 @@ export namespace Provider {
           timeout: false,
         })
       }
+
+      const oauthConfig = config.provider?.[model.providerID]?.oauth
+      options["fetch"] = createOAuthRotatingFetch(fetchWithTimeout, {
+        providerID: model.providerID,
+        maxAttempts: oauthConfig?.maxAttempts,
+        rateLimitCooldownMs: oauthConfig?.rateLimitCooldownMs,
+        authFailureCooldownMs: oauthConfig?.authFailureCooldownMs,
+        networkRetryAttempts: oauthConfig?.networkRetryAttempts,
+        toastDurationMs: oauthConfig?.toastDurationMs,
+      })
 
       // Special case: google-vertex-anthropic uses a subpath import
       const bundledKey =

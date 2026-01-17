@@ -82,13 +82,12 @@ async function handlePluginAuth(plugin: { auth: PluginAuth }, provider: string):
       if (result.type === "success") {
         const saveProvider = result.provider ?? provider
         if ("refresh" in result) {
-          const { type: _, provider: __, refresh, access, expires, ...extraFields } = result
-          await Auth.set(saveProvider, {
-            type: "oauth",
-            refresh,
-            access,
-            expires,
-            ...extraFields,
+          await Auth.addOAuth(saveProvider, {
+            refresh: result.refresh,
+            access: result.access,
+            expires: result.expires,
+            accountId: result.accountId,
+            enterpriseUrl: result.enterpriseUrl,
           })
         }
         if ("key" in result) {
@@ -114,13 +113,12 @@ async function handlePluginAuth(plugin: { auth: PluginAuth }, provider: string):
       if (result.type === "success") {
         const saveProvider = result.provider ?? provider
         if ("refresh" in result) {
-          const { type: _, provider: __, refresh, access, expires, ...extraFields } = result
-          await Auth.set(saveProvider, {
-            type: "oauth",
-            refresh,
-            access,
-            expires,
-            ...extraFields,
+          await Auth.addOAuth(saveProvider, {
+            refresh: result.refresh,
+            access: result.access,
+            expires: result.expires,
+            accountId: result.accountId,
+            enterpriseUrl: result.enterpriseUrl,
           })
         }
         if ("key" in result) {
@@ -159,11 +157,74 @@ async function handlePluginAuth(plugin: { auth: PluginAuth }, provider: string):
   return false
 }
 
+export const AuthUsageCommand = cmd({
+  command: "usage",
+  describe: "show rate limit usage for providers",
+  async handler() {
+    UI.empty()
+    prompts.intro("Usage")
+    const all = await Auth.all()
+    const database = await ModelsDev.get()
+
+    let hasOAuth = false
+    for (const [providerID, info] of Object.entries(all)) {
+      if (info.type !== "oauth") continue
+      hasOAuth = true
+
+      const name = database[providerID]?.name || providerID
+      const accounts = await Auth.OAuthPool.getUsage(providerID)
+
+      for (const account of accounts) {
+        const label = account.label || "default"
+        const status = account.isActive ? `${UI.Style.TEXT_SUCCESS}active` : UI.Style.TEXT_DIM + "inactive"
+        prompts.log.step(`${name} (${label}) - ${status}`)
+
+        if (account.health.cooldownUntil && account.health.cooldownUntil > Date.now()) {
+          const remaining = Math.ceil((account.health.cooldownUntil - Date.now()) / 1000)
+          prompts.log.warn(`  In cooldown for ${remaining}s`)
+        }
+
+        prompts.log.info(`  ${account.health.successCount} successful requests`)
+        if (account.health.failureCount > 0) {
+          prompts.log.warn(`  ${account.health.failureCount} failed requests`)
+        }
+      }
+
+      if (providerID === "anthropic") {
+        const usage = await Auth.OAuthPool.fetchAnthropicUsage(providerID)
+        if (usage) {
+          prompts.log.step("Anthropic Rate Limits:")
+          if (usage.fiveHour) {
+            prompts.log.info(`  5-Hour: ${usage.fiveHour.utilization}% used`)
+          }
+          if (usage.sevenDay) {
+            prompts.log.info(`  7-Day (All): ${usage.sevenDay.utilization}% used`)
+          }
+          if (usage.sevenDaySonnet) {
+            prompts.log.info(`  7-Day (Sonnet): ${usage.sevenDaySonnet.utilization}% used`)
+          }
+        }
+      }
+    }
+
+    if (!hasOAuth) {
+      prompts.log.warn("No OAuth providers configured")
+    }
+
+    prompts.outro("")
+  },
+})
+
 export const AuthCommand = cmd({
   command: "auth",
   describe: "manage credentials",
   builder: (yargs) =>
-    yargs.command(AuthLoginCommand).command(AuthLogoutCommand).command(AuthListCommand).demandCommand(),
+    yargs
+      .command(AuthLoginCommand)
+      .command(AuthLogoutCommand)
+      .command(AuthListCommand)
+      .command(AuthUsageCommand)
+      .demandCommand(),
   async handler() {},
 })
 
@@ -182,7 +243,12 @@ export const AuthListCommand = cmd({
 
     for (const [providerID, result] of results) {
       const name = database[providerID]?.name || providerID
-      prompts.log.info(`${name} ${UI.Style.TEXT_DIM}${result.type}`)
+      if (result.type === "oauth") {
+        const count = await Auth.OAuthPool.list(providerID).then((accounts) => accounts.length)
+        prompts.log.info(`${name} ${UI.Style.TEXT_DIM}oauth${count > 1 ? ` (${count} accounts)` : ""}`)
+      } else {
+        prompts.log.info(`${name} ${UI.Style.TEXT_DIM}${result.type}`)
+      }
     }
 
     prompts.outro(`${results.length} credentials`)
