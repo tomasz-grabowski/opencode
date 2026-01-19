@@ -14,6 +14,9 @@ export type Platform = {
   /** Open a URL in the default browser */
   openLink(url: string): void
 
+  /** Run a command in a new terminal window (desktop only) */
+  runInTerminal?(command: string): Promise<void>
+
   /** Restart the app  */
   restart(): Promise<void>
 

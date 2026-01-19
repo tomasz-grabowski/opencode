@@ -570,6 +570,73 @@ export namespace Auth {
         record.updatedAt = Date.now()
         return { value: undefined, changed: true }
       })
+
+      // Attempt auto-relogin via browser session (async, don't block)
+      if (providerID === "anthropic") {
+        attemptBrowserRelogin(providerID, recordID, namespace).catch(() => {
+          // Silently fail - user can manually re-auth
+        })
+      }
+    }
+
+    /**
+     * Attempt to refresh tokens via browser session
+     */
+    async function attemptBrowserRelogin(providerID: string, recordID: string, namespace: string): Promise<void> {
+      try {
+        const { AuthBrowser } = await import("./browser")
+        const { AutoRelogin } = await import("./auto-relogin")
+
+        const session = await AuthBrowser.status(recordID)
+        if (!session.isConfigured) {
+          return // No browser session configured
+        }
+
+        log.info("attempting auto-relogin via browser session", { providerID, recordID })
+
+        // Show toast notification
+        const { Bus } = await import("../bus")
+        const { TuiEvent } = await import("../cli/cmd/tui/event")
+        await Bus.publish(TuiEvent.ToastShow, {
+          title: "Auto-Relogin",
+          message: "Token expired. Attempting automatic refresh...",
+          variant: "info",
+          duration: 5000,
+        }).catch(() => {})
+
+        const tokens = await AuthBrowser.refresh(recordID)
+
+        // Update the auth store with new tokens
+        await updateRecord(providerID, recordID, namespace, {
+          access: tokens.access,
+          refresh: tokens.refresh,
+          expires: tokens.expires,
+        })
+
+        log.info("auto-relogin successful", { providerID, recordID })
+
+        await Bus.publish(TuiEvent.ToastShow, {
+          title: "Auto-Relogin",
+          message: "Token refreshed successfully!",
+          variant: "success",
+          duration: 3000,
+        }).catch(() => {})
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        log.warn("auto-relogin failed", { providerID, recordID, error: message })
+
+        // Show failure toast
+        try {
+          const { Bus } = await import("../bus")
+          const { TuiEvent } = await import("../cli/cmd/tui/event")
+          await Bus.publish(TuiEvent.ToastShow, {
+            title: "Auto-Relogin Failed",
+            message: "Please run 'opencode auth browser setup' to re-authenticate.",
+            variant: "error",
+            duration: 10000,
+          }).catch(() => {})
+        } catch {}
+      }
     }
 
     export async function getUsage(
@@ -630,6 +697,28 @@ export namespace Auth {
         const order = recordIDsForNamespace(provider, namespace)
         provider.order[namespace] = [recordID, ...order.filter((id) => id !== recordID)]
         provider.active[namespace] = recordID
+
+        return { value: true, changed: true }
+      })
+    }
+
+    export async function updateRecord(
+      providerID: string,
+      recordID: string,
+      namespace: string,
+      update: { access?: string; refresh?: string; expires?: number },
+    ): Promise<boolean> {
+      return updateStore((store) => {
+        const provider = store.providers[providerID]
+        if (!provider || provider.type !== "oauth") return { value: false, changed: false }
+
+        const record = provider.records.find((r) => r.id === recordID && r.namespace === namespace)
+        if (!record) return { value: false, changed: false }
+
+        if (update.access !== undefined) record.access = update.access
+        if (update.refresh !== undefined) record.refresh = update.refresh
+        if (update.expires !== undefined) record.expires = update.expires
+        record.updatedAt = Date.now()
 
         return { value: true, changed: true }
       })

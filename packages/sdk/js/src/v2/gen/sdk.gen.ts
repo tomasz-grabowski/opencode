@@ -9,6 +9,8 @@ import type {
   AppLogResponses,
   AppSkillsResponses,
   Auth as Auth3,
+  AuthRemoveAccountErrors,
+  AuthRemoveAccountResponses,
   AuthSetActiveErrors,
   AuthSetActiveResponses,
   AuthSetErrors,
@@ -21,6 +23,8 @@ import type {
   ConfigProvidersResponses,
   ConfigUpdateErrors,
   ConfigUpdateResponses,
+  ConfigYoloGetResponses,
+  ConfigYoloSetResponses,
   EventSubscribeResponses,
   EventTuiCommandExecute,
   EventTuiPromptAppend,
@@ -73,6 +77,15 @@ import type {
   ProjectUpdateErrors,
   ProjectUpdateResponses,
   ProviderAuthResponses,
+  ProviderBrowserSessionRefreshErrors,
+  ProviderBrowserSessionRefreshResponses,
+  ProviderBrowserSessionRemoveErrors,
+  ProviderBrowserSessionRemoveResponses,
+  ProviderBrowserSessionSetupErrors,
+  ProviderBrowserSessionSetupResponses,
+  ProviderBrowserSessionsResponses,
+  ProviderBrowserSessionStatusErrors,
+  ProviderBrowserSessionStatusResponses,
   ProviderListResponses,
   ProviderOauthAuthorizeErrors,
   ProviderOauthAuthorizeResponses,
@@ -529,6 +542,64 @@ export class Pty extends HeyApiClient {
   }
 }
 
+export class Yolo extends HeyApiClient {
+  /**
+   * Get YOLO mode status
+   *
+   * Check if YOLO mode is enabled. When enabled, all permission prompts are auto-approved (except explicit deny rules).
+   */
+  public get<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams([parameters], [{ args: [{ in: "query", key: "directory" }] }])
+    return (options?.client ?? this.client).get<ConfigYoloGetResponses, unknown, ThrowOnError>({
+      url: "/config/yolo",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Set YOLO mode
+   *
+   * Enable or disable YOLO mode. When enabled, all permission prompts are auto-approved (except explicit deny rules). Use with caution. Set persist=true to save to config file.
+   */
+  public set<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      enabled?: boolean
+      persist?: boolean
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "body", key: "enabled" },
+            { in: "body", key: "persist" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<ConfigYoloSetResponses, unknown, ThrowOnError>({
+      url: "/config/yolo",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+}
+
 export class Config extends HeyApiClient {
   /**
    * Get configuration
@@ -601,6 +672,11 @@ export class Config extends HeyApiClient {
       ...options,
       ...params,
     })
+  }
+
+  private _yolo?: Yolo
+  get yolo(): Yolo {
+    return (this._yolo ??= new Yolo({ client: this.client }))
   }
 }
 
@@ -1932,6 +2008,170 @@ export class Oauth extends HeyApiClient {
   }
 }
 
+export class Session2 extends HeyApiClient {
+  /**
+   * Remove browser session
+   *
+   * Remove a browser session and its stored profile data.
+   */
+  public remove<ThrowOnError extends boolean = false>(
+    parameters: {
+      recordId: string
+      directory?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "recordId" },
+            { in: "query", key: "directory" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).delete<
+      ProviderBrowserSessionRemoveResponses,
+      ProviderBrowserSessionRemoveErrors,
+      ThrowOnError
+    >({
+      url: "/provider/browser/sessions/{recordId}",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Get browser session status
+   *
+   * Get status of a specific browser session.
+   */
+  public status<ThrowOnError extends boolean = false>(
+    parameters: {
+      recordId: string
+      directory?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "recordId" },
+            { in: "query", key: "directory" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<
+      ProviderBrowserSessionStatusResponses,
+      ProviderBrowserSessionStatusErrors,
+      ThrowOnError
+    >({
+      url: "/provider/browser/sessions/{recordId}",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Setup browser session
+   *
+   * Start browser session setup. Opens a visible browser for user to log in. Returns tokens on success.
+   */
+  public setup<ThrowOnError extends boolean = false>(
+    parameters: {
+      recordId: string
+      directory?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "recordId" },
+            { in: "query", key: "directory" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<
+      ProviderBrowserSessionSetupResponses,
+      ProviderBrowserSessionSetupErrors,
+      ThrowOnError
+    >({
+      url: "/provider/browser/sessions/{recordId}/setup",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Refresh tokens via browser session
+   *
+   * Attempt to refresh OAuth tokens using the existing browser session (headless).
+   */
+  public refresh<ThrowOnError extends boolean = false>(
+    parameters: {
+      recordId: string
+      directory?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "recordId" },
+            { in: "query", key: "directory" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<
+      ProviderBrowserSessionRefreshResponses,
+      ProviderBrowserSessionRefreshErrors,
+      ThrowOnError
+    >({
+      url: "/provider/browser/sessions/{recordId}/refresh",
+      ...options,
+      ...params,
+    })
+  }
+}
+
+export class Browser extends HeyApiClient {
+  /**
+   * List browser sessions
+   *
+   * Get status of all browser sessions configured for auto-relogin.
+   */
+  public sessions<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams([parameters], [{ args: [{ in: "query", key: "directory" }] }])
+    return (options?.client ?? this.client).get<ProviderBrowserSessionsResponses, unknown, ThrowOnError>({
+      url: "/provider/browser/sessions",
+      ...options,
+      ...params,
+    })
+  }
+
+  private _session?: Session2
+  get session(): Session2 {
+    return (this._session ??= new Session2({ client: this.client }))
+  }
+}
+
 export class Provider extends HeyApiClient {
   /**
    * List providers
@@ -1974,6 +2214,11 @@ export class Provider extends HeyApiClient {
   private _oauth?: Oauth
   get oauth(): Oauth {
     return (this._oauth ??= new Oauth({ client: this.client }))
+  }
+
+  private _browser?: Browser
+  get browser(): Browser {
+    return (this._browser ??= new Browser({ client: this.client }))
   }
 }
 
@@ -2793,6 +3038,45 @@ export class Auth2 extends HeyApiClient {
     )
     return (options?.client ?? this.client).post<AuthSetActiveResponses, AuthSetActiveErrors, ThrowOnError>({
       url: "/auth/active",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+
+  /**
+   * Remove OAuth account
+   *
+   * Remove an OAuth account from a provider. If this is the last account, the provider will be disconnected.
+   */
+  public removeAccount<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      providerID?: string
+      recordID?: string
+      namespace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "body", key: "providerID" },
+            { in: "body", key: "recordID" },
+            { in: "body", key: "namespace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).delete<AuthRemoveAccountResponses, AuthRemoveAccountErrors, ThrowOnError>({
+      url: "/auth/account",
       ...options,
       ...params,
       headers: {

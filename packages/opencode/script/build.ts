@@ -132,6 +132,14 @@ for (const item of targets) {
     tsconfig: "./tsconfig.json",
     plugins: [solidPlugin],
     sourcemap: "external",
+    external: [
+      "playwright",
+      "playwright-core",
+      "puppeteer",
+      "puppeteer-extra",
+      "puppeteer-extra-plugin-stealth",
+      "puppeteer-core",
+    ], // Don't bundle browser automation - it's optional
     compile: {
       autoloadBunfig: false,
       autoloadDotenv: false,

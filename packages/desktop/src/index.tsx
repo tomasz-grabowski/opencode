@@ -79,6 +79,22 @@ const createPlatform = (password: Accessor<string | null>): Platform => ({
     void shellOpen(url).catch(() => undefined)
   },
 
+  async runInTerminal(command: string) {
+    // Copy command to clipboard
+    try {
+      await navigator.clipboard.writeText(command)
+    } catch {
+      // Fallback for older browsers
+    }
+
+    // Show dialog with instructions
+    const { message } = await import("@tauri-apps/plugin-dialog")
+    await message(`Command copied to clipboard!\n\nOpen Terminal and paste:\n\n${command}`, {
+      title: "Run in Terminal",
+      kind: "info",
+    })
+  },
+
   storage: (() => {
     type StoreLike = {
       get(key: string): Promise<string | null | undefined>

@@ -122,6 +122,202 @@ function TabButton(props: {
   )
 }
 
+interface BrowserSession {
+  recordId: string
+  enabled: boolean
+  profilePath: string
+  lastRefresh?: number
+  lastError?: string
+  isConfigured: boolean
+  label?: string
+}
+
+function formatTimeAgo(timestamp: number): string {
+  const seconds = Math.floor((Date.now() - timestamp) / 1000)
+  if (seconds < 60) return "just now"
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
+  return `${Math.floor(seconds / 86400)}d ago`
+}
+
+// Browser Sessions Section for Auto-Relogin
+function BrowserSessionsSection(props: { accounts: AccountUsage[] }) {
+  const globalSDK = useGlobalSDK()
+  const platform = usePlatform()
+
+  // Track if component is ready (globalSDK.url is available)
+  const isReady = () => !!globalSDK.url
+
+  const [sessions, setSessions] = createSignal<BrowserSession[]>([])
+  const [loading, setLoading] = createSignal(true)
+  const [removing, setRemoving] = createSignal<string | null>(null)
+  const [refreshing, setRefreshing] = createSignal<string | null>(null)
+
+  // Fetch sessions when component mounts and URL is ready
+  const fetchSessions = async () => {
+    if (!globalSDK.url) {
+      setLoading(false)
+      return
+    }
+    try {
+      const doFetch = platform.fetch ?? fetch
+      const url = `${globalSDK.url}/provider/browser/sessions`
+      const response = await doFetch(url)
+      if (response.ok) {
+        const data = await response.json()
+        setSessions(data)
+      }
+    } catch (e) {
+      console.error("Failed to fetch browser sessions:", e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Initial fetch - delayed to ensure globalSDK is ready
+  setTimeout(() => fetchSessions(), 100)
+
+  const refreshSession = async (recordId: string) => {
+    if (!globalSDK.url) return
+    setRefreshing(recordId)
+    try {
+      const doFetch = platform.fetch ?? fetch
+      const response = await doFetch(`${globalSDK.url}/provider/browser/sessions/${recordId}/refresh`, {
+        method: "POST",
+      })
+      if (response.ok) {
+        await fetchSessions()
+      }
+    } catch (e) {
+      console.error("Failed to refresh session:", e)
+    } finally {
+      setRefreshing(null)
+    }
+  }
+
+  const removeSession = async (recordId: string) => {
+    if (!globalSDK.url) return
+    setRemoving(recordId)
+    try {
+      const doFetch = platform.fetch ?? fetch
+      const response = await doFetch(`${globalSDK.url}/provider/browser/sessions/${recordId}`, {
+        method: "DELETE",
+      })
+      if (response.ok) {
+        await fetchSessions()
+      }
+    } catch (e) {
+      console.error("Failed to remove session:", e)
+    } finally {
+      setRemoving(null)
+    }
+  }
+
+  const getSessionForAccount = (accountId: string) => {
+    return sessions()?.find((s) => s.recordId === accountId)
+  }
+
+  return (
+    <div class="flex flex-col gap-2 p-3 rounded-lg bg-fill-ghost-base border border-border-weak-base">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <Icon name="settings-gear" class="size-4 text-icon-muted" />
+          <span class="text-12-medium text-text-strong">Auto-Relogin</span>
+        </div>
+        <span class="text-10-medium text-fill-brand-base bg-fill-brand-ghost px-1.5 py-0.5 rounded">Experimental</span>
+      </div>
+      <p class="text-11-regular text-text-muted">
+        Configure browser sessions for automatic token refresh when tokens expire overnight.
+      </p>
+
+      <Show when={loading()}>
+        <div class="flex items-center justify-center py-2">
+          <Spinner class="size-4" />
+        </div>
+      </Show>
+
+      <Show when={!loading()}>
+        <div class="flex flex-col gap-1 mt-1">
+          <For each={props.accounts}>
+            {(account, index) => {
+              const session = () => getSessionForAccount(account.id)
+              const isRemoving = () => removing() === account.id
+              const isRefreshing = () => refreshing() === account.id
+
+              return (
+                <div class="flex items-center justify-between p-2 rounded-md bg-surface-base">
+                  <div class="flex items-center gap-2">
+                    <span class="text-12-medium text-text-base">
+                      Account {index() + 1}
+                      <Show when={account.label && account.label !== "default"}>
+                        <span class="text-text-muted"> ({account.label})</span>
+                      </Show>
+                    </span>
+                    <Show when={session()?.isConfigured}>
+                      <span class="text-10-medium text-fill-success-base">Enabled</span>
+                      <Show when={session()?.lastRefresh}>
+                        <span class="text-10-regular text-text-muted">
+                          (refreshed {formatTimeAgo(session()!.lastRefresh!)})
+                        </span>
+                      </Show>
+                    </Show>
+                    <Show when={session()?.lastError}>
+                      <span class="text-10-medium text-fill-danger-base" title={session()?.lastError}>
+                        Error
+                      </span>
+                    </Show>
+                  </div>
+
+                  <div class="flex items-center gap-1">
+                    <Show
+                      when={session()?.isConfigured}
+                      fallback={
+                        <button
+                          type="button"
+                          onClick={() => platform.runInTerminal?.("opencode auth browser setup")}
+                          class="px-2 py-1 rounded text-10-medium bg-fill-brand-base text-white hover:bg-fill-brand-strong transition-colors"
+                        >
+                          Setup
+                        </button>
+                      }
+                    >
+                      <button
+                        type="button"
+                        onClick={() => refreshSession(account.id)}
+                        disabled={isRefreshing()}
+                        class="px-2 py-1 rounded text-10-medium bg-fill-ghost-strong text-text-base hover:bg-fill-ghost-base transition-colors disabled:opacity-50"
+                        title="Test refresh"
+                      >
+                        <Show when={isRefreshing()} fallback="Test">
+                          <Spinner class="size-3" />
+                        </Show>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeSession(account.id)}
+                        disabled={isRemoving()}
+                        class="px-2 py-1 rounded text-10-medium bg-fill-danger-ghost text-fill-danger-base hover:bg-fill-danger-base hover:text-white transition-colors disabled:opacity-50"
+                      >
+                        <Show when={isRemoving()} fallback="Remove">
+                          <Spinner class="size-3" />
+                        </Show>
+                      </button>
+                    </Show>
+                  </div>
+                </div>
+              )
+            }}
+          </For>
+        </div>
+      </Show>
+
+      <div class="text-10-regular text-text-weak mt-1">
+        Setup opens a browser window where you log in to claude.ai. Sessions are stored locally.
+      </div>
+    </div>
+  )
+}
+
 // Provider detail view - shows accounts, usage, switch functionality
 function ProviderDetailView(props: { providerID: string; providerName: string; onBack: () => void }) {
   const globalSDK = useGlobalSDK()
@@ -350,6 +546,11 @@ function ProviderDetailView(props: { providerID: string; providerName: string; o
                 </For>
               </div>
             </div>
+
+            {/* Auto-Relogin Browser Sessions (Anthropic only) */}
+            <Show when={isAnthropic}>
+              <BrowserSessionsSection accounts={data().accounts} />
+            </Show>
 
             {/* Add Account Button */}
             <button
