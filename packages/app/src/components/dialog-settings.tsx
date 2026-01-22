@@ -56,15 +56,23 @@ export const DialogSettings: Component = () => {
               <span class="text-11-regular">v{platform.version}</span>
             </div>
           </div>
-          {/* <Tabs.SectionTitle>Server</Tabs.SectionTitle> */}
-          {/* <Tabs.Trigger value="permissions"> */}
-          {/*   <Icon name="checklist" /> */}
-          {/*   Permissions */}
-          {/* </Tabs.Trigger> */}
-          {/* <Tabs.Trigger value="providers"> */}
-          {/*   <Icon name="server" /> */}
-          {/*   Providers */}
-          {/* </Tabs.Trigger> */}
+          <div
+            style={{
+              display: "flex",
+              "flex-direction": "column",
+              gap: "12px",
+              width: "100%",
+              "padding-top": "12px",
+            }}
+          >
+            <Tabs.SectionTitle>Server</Tabs.SectionTitle>
+            <div style={{ display: "flex", "flex-direction": "column", gap: "6px", width: "100%" }}>
+              <Tabs.Trigger value="providers">
+                <Icon name="server" />
+                Providers
+              </Tabs.Trigger>
+            </div>
+          </div>
           {/* <Tabs.Trigger value="models"> */}
           {/*   <Icon name="brain" /> */}
           {/*   Models */}
@@ -91,9 +99,9 @@ export const DialogSettings: Component = () => {
         {/* <Tabs.Content value="permissions" class="no-scrollbar"> */}
         {/*   <SettingsPermissions /> */}
         {/* </Tabs.Content> */}
-        {/* <Tabs.Content value="providers" class="no-scrollbar"> */}
-        {/*   <SettingsProviders /> */}
-        {/* </Tabs.Content> */}
+        <Tabs.Content value="providers" class="no-scrollbar">
+          <SettingsProviders />
+        </Tabs.Content>
         {/* <Tabs.Content value="models" class="no-scrollbar"> */}
         {/*   <SettingsModels /> */}
         {/* </Tabs.Content> */}

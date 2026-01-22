@@ -9,8 +9,20 @@ import type {
   AppLogResponses,
   AppSkillsResponses,
   Auth as Auth3,
+  AuthDeleteAccountErrors,
+  AuthDeleteAccountResponses,
+  AuthRemoveAccountErrors,
+  AuthRemoveAccountResponses,
+  AuthSetActive2Errors,
+  AuthSetActive2Responses,
+  AuthSetActiveErrors,
+  AuthSetActiveResponses,
   AuthSetErrors,
   AuthSetResponses,
+  AuthUsage2Errors,
+  AuthUsage2Responses,
+  AuthUsageErrors,
+  AuthUsageResponses,
   CommandListResponses,
   Config as Config2,
   ConfigGetResponses,
@@ -2057,6 +2069,237 @@ export class Provider extends HeyApiClient {
   }
 }
 
+export class Auth extends HeyApiClient {
+  /**
+   * Get auth usage
+   *
+   * Get rate limit and usage information for authenticated providers.
+   */
+  public usage<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams([parameters], [{ args: [{ in: "query", key: "directory" }] }])
+    return (options?.client ?? this.client).get<AuthUsageResponses, AuthUsageErrors, ThrowOnError>({
+      url: "/provider/auth/usage",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Set active OAuth account
+   *
+   * Switch the active OAuth account for a provider.
+   */
+  public setActive<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      providerID?: string
+      recordID?: string
+      namespace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "body", key: "providerID" },
+            { in: "body", key: "recordID" },
+            { in: "body", key: "namespace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<AuthSetActiveResponses, AuthSetActiveErrors, ThrowOnError>({
+      url: "/provider/auth/active",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+
+  /**
+   * Delete OAuth account
+   *
+   * Remove an OAuth account from a provider.
+   */
+  public deleteAccount<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      providerID?: string
+      recordID?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "body", key: "providerID" },
+            { in: "body", key: "recordID" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).delete<AuthDeleteAccountResponses, AuthDeleteAccountErrors, ThrowOnError>({
+      url: "/provider/auth/account",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+
+  /**
+   * Get auth usage
+   *
+   * Get rate limit and usage information for authenticated providers.
+   */
+  public usage2<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams([parameters], [{ args: [{ in: "query", key: "directory" }] }])
+    return (options?.client ?? this.client).get<AuthUsage2Responses, AuthUsage2Errors, ThrowOnError>({
+      url: "/auth/usage",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Set active OAuth account
+   *
+   * Set the active OAuth account for a provider. This account will be used for requests until rate limited.
+   */
+  public setActive2<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      providerID?: string
+      recordID?: string
+      namespace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "body", key: "providerID" },
+            { in: "body", key: "recordID" },
+            { in: "body", key: "namespace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<AuthSetActive2Responses, AuthSetActive2Errors, ThrowOnError>({
+      url: "/auth/active",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+
+  /**
+   * Remove OAuth account
+   *
+   * Remove an OAuth account from a provider. If this is the last account, the provider will be disconnected.
+   */
+  public removeAccount<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      providerID?: string
+      recordID?: string
+      namespace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "body", key: "providerID" },
+            { in: "body", key: "recordID" },
+            { in: "body", key: "namespace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).delete<AuthRemoveAccountResponses, AuthRemoveAccountErrors, ThrowOnError>({
+      url: "/auth/account",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+
+  /**
+   * Set auth credentials
+   *
+   * Set authentication credentials
+   */
+  public set<ThrowOnError extends boolean = false>(
+    parameters: {
+      providerID: string
+      directory?: string
+      auth?: Auth3
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "providerID" },
+            { in: "query", key: "directory" },
+            { key: "auth", map: "body" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).put<AuthSetResponses, AuthSetErrors, ThrowOnError>({
+      url: "/auth/{providerID}",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+}
+
 export class Find extends HeyApiClient {
   /**
    * Find text
@@ -2236,7 +2479,7 @@ export class File extends HeyApiClient {
   }
 }
 
-export class Auth extends HeyApiClient {
+export class Auth2 extends HeyApiClient {
   /**
    * Remove MCP OAuth
    *
@@ -2480,9 +2723,9 @@ export class Mcp extends HeyApiClient {
     })
   }
 
-  private _auth?: Auth
-  get auth(): Auth {
-    return (this._auth ??= new Auth({ client: this.client }))
+  private _auth?: Auth2
+  get auth(): Auth2 {
+    return (this._auth ??= new Auth2({ client: this.client }))
   }
 }
 
@@ -3033,45 +3276,6 @@ export class Formatter extends HeyApiClient {
   }
 }
 
-export class Auth2 extends HeyApiClient {
-  /**
-   * Set auth credentials
-   *
-   * Set authentication credentials
-   */
-  public set<ThrowOnError extends boolean = false>(
-    parameters: {
-      providerID: string
-      directory?: string
-      auth?: Auth3
-    },
-    options?: Options<never, ThrowOnError>,
-  ) {
-    const params = buildClientParams(
-      [parameters],
-      [
-        {
-          args: [
-            { in: "path", key: "providerID" },
-            { in: "query", key: "directory" },
-            { key: "auth", map: "body" },
-          ],
-        },
-      ],
-    )
-    return (options?.client ?? this.client).put<AuthSetResponses, AuthSetErrors, ThrowOnError>({
-      url: "/auth/{providerID}",
-      ...options,
-      ...params,
-      headers: {
-        "Content-Type": "application/json",
-        ...options?.headers,
-        ...params.headers,
-      },
-    })
-  }
-}
-
 export class Event extends HeyApiClient {
   /**
    * Subscribe to events
@@ -3161,6 +3365,11 @@ export class OpencodeClient extends HeyApiClient {
     return (this._provider ??= new Provider({ client: this.client }))
   }
 
+  private _auth?: Auth
+  get auth(): Auth {
+    return (this._auth ??= new Auth({ client: this.client }))
+  }
+
   private _find?: Find
   get find(): Find {
     return (this._find ??= new Find({ client: this.client }))
@@ -3214,11 +3423,6 @@ export class OpencodeClient extends HeyApiClient {
   private _formatter?: Formatter
   get formatter(): Formatter {
     return (this._formatter ??= new Formatter({ client: this.client }))
-  }
-
-  private _auth?: Auth2
-  get auth(): Auth2 {
-    return (this._auth ??= new Auth2({ client: this.client }))
   }
 
   private _event?: Event
