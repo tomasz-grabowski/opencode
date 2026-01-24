@@ -208,7 +208,8 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
           }
         }
 
-        throw new Error("No default model found")
+        // Return undefined instead of throwing - providers may not be loaded yet
+        return undefined as unknown as ModelKey
       })
 
       const current = createMemo(() => {
