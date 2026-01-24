@@ -9,6 +9,25 @@ import { usePlatform } from "@/context/platform"
 import { playSound, SOUND_OPTIONS } from "@/utils/sound"
 import { Link } from "./link"
 
+let demoSoundState = {
+  cleanup: undefined as (() => void) | undefined,
+  timeout: undefined as NodeJS.Timeout | undefined,
+}
+
+// To prevent audio from overlapping/playing very quickly when navigating the settings menus,
+// delay the playback by 100ms during quick selection changes and pause existing sounds.
+const playDemoSound = (src: string) => {
+  if (demoSoundState.cleanup) {
+    demoSoundState.cleanup()
+  }
+
+  clearTimeout(demoSoundState.timeout)
+
+  demoSoundState.timeout = setTimeout(() => {
+    demoSoundState.cleanup = playSound(src)
+  }, 100)
+}
+
 export const SettingsGeneral: Component = () => {
   const theme = useTheme()
   const language = useLanguage()
@@ -86,6 +105,7 @@ export const SettingsGeneral: Component = () => {
     { value: "hack", label: "font.option.hack" },
     { value: "inconsolata", label: "font.option.inconsolata" },
     { value: "intel-one-mono", label: "font.option.intelOneMono" },
+    { value: "iosevka", label: "font.option.iosevka" },
     { value: "jetbrains-mono", label: "font.option.jetbrainsMono" },
     { value: "meslo-lgs", label: "font.option.mesloLgs" },
     { value: "roboto-mono", label: "font.option.robotoMono" },
@@ -260,12 +280,12 @@ export const SettingsGeneral: Component = () => {
                 label={(o) => language.t(o.label)}
                 onHighlight={(option) => {
                   if (!option) return
-                  playSound(option.src)
+                  playDemoSound(option.src)
                 }}
                 onSelect={(option) => {
                   if (!option) return
                   settings.sounds.setAgent(option.id)
-                  playSound(option.src)
+                  playDemoSound(option.src)
                 }}
                 variant="secondary"
                 size="small"
@@ -284,12 +304,12 @@ export const SettingsGeneral: Component = () => {
                 label={(o) => language.t(o.label)}
                 onHighlight={(option) => {
                   if (!option) return
-                  playSound(option.src)
+                  playDemoSound(option.src)
                 }}
                 onSelect={(option) => {
                   if (!option) return
                   settings.sounds.setPermissions(option.id)
-                  playSound(option.src)
+                  playDemoSound(option.src)
                 }}
                 variant="secondary"
                 size="small"
@@ -308,12 +328,12 @@ export const SettingsGeneral: Component = () => {
                 label={(o) => language.t(o.label)}
                 onHighlight={(option) => {
                   if (!option) return
-                  playSound(option.src)
+                  playDemoSound(option.src)
                 }}
                 onSelect={(option) => {
                   if (!option) return
                   settings.sounds.setErrors(option.id)
-                  playSound(option.src)
+                  playDemoSound(option.src)
                 }}
                 variant="secondary"
                 size="small"
