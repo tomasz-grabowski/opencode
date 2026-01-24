@@ -323,6 +323,25 @@ export const SettingsGeneral: Component = () => {
           </div>
         </div>
 
+        {/* Browser Section - Desktop only */}
+        <Show when={platform.platform === "desktop"}>
+          <div class="flex flex-col gap-1">
+            <h3 class="text-14-medium text-text-strong pb-2">Browser</h3>
+
+            <div class="bg-surface-raised-base px-4 rounded-lg">
+              <SettingsRow
+                title="Open Links in External Browser"
+                description="When enabled, clicking links will open them in your default system browser instead of within the app."
+              >
+                <Switch
+                  checked={settings.browser.openLinksExternally()}
+                  onChange={(checked) => settings.browser.setOpenLinksExternally(checked)}
+                />
+              </SettingsRow>
+            </div>
+          </div>
+        </Show>
+
         {/* YOLO Mode Section */}
         <div class="flex flex-col gap-1">
           <div class="flex items-center gap-2 pb-2">

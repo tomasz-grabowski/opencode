@@ -15,6 +15,10 @@ export interface SoundSettings {
   errors: string
 }
 
+export interface BrowserSettings {
+  openLinksExternally: boolean
+}
+
 export interface Settings {
   general: {
     autoSave: boolean
@@ -29,6 +33,7 @@ export interface Settings {
   }
   notifications: NotificationSettings
   sounds: SoundSettings
+  browser: BrowserSettings
 }
 
 const defaultSettings: Settings = {
@@ -52,6 +57,9 @@ const defaultSettings: Settings = {
     agent: "staplebops-01",
     permissions: "staplebops-02",
     errors: "nope-03",
+  },
+  browser: {
+    openLinksExternally: true,
   },
 }
 
@@ -151,6 +159,14 @@ export const { use: useSettings, provider: SettingsProvider } = createSimpleCont
         errors: createMemo(() => store.sounds?.errors ?? defaultSettings.sounds.errors),
         setErrors(value: string) {
           setStore("sounds", "errors", value)
+        },
+      },
+      browser: {
+        openLinksExternally: createMemo(
+          () => store.browser?.openLinksExternally ?? defaultSettings.browser.openLinksExternally,
+        ),
+        setOpenLinksExternally(value: boolean) {
+          setStore("browser", "openLinksExternally", value)
         },
       },
     }

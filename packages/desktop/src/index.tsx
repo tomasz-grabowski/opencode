@@ -41,6 +41,24 @@ window.getComputedStyle = ((elt: Element, pseudoElt?: string | null) => {
 
 let update: Update | null = null
 
+// Settings key for reading browser preferences
+const SETTINGS_KEY = "settings.v3"
+
+// Read browser settings from store
+async function shouldOpenLinksExternally(): Promise<boolean> {
+  try {
+    const store = await Store.load("opencode.global.dat")
+    const settings = await store.get(SETTINGS_KEY)
+    if (settings && typeof settings === "object" && "browser" in (settings as object)) {
+      const browser = (settings as { browser?: { openLinksExternally?: boolean } }).browser
+      return browser?.openLinksExternally !== false // Default to true
+    }
+  } catch {
+    // Ignore errors, default to true
+  }
+  return true // Default: open links externally
+}
+
 const createPlatform = (password: Accessor<string | null>): Platform => ({
   platform: "desktop",
   os: (() => {
@@ -328,12 +346,21 @@ render(() => {
   const [serverPassword, setServerPassword] = createSignal<string | null>(null)
   const platform = createPlatform(() => serverPassword())
 
-  function handleClick(e: MouseEvent) {
-    const link = (e.target as HTMLElement).closest("a.external-link") as HTMLAnchorElement | null
-    if (link?.href) {
+  async function handleClick(e: MouseEvent) {
+    const link = (e.target as HTMLElement).closest("a") as HTMLAnchorElement | null
+    if (!link?.href) return
+
+    // Check if it's an external link (http/https)
+    const isExternal = link.href.startsWith("http://") || link.href.startsWith("https://")
+    if (!isExternal) return
+
+    // Check user preference
+    const openExternally = await shouldOpenLinksExternally()
+    if (openExternally) {
       e.preventDefault()
       platform.openLink(link.href)
     }
+    // If not opening externally, let the default behavior happen (opens in app)
   }
 
   onMount(() => {
