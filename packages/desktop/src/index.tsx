@@ -346,7 +346,7 @@ render(() => {
   const [serverPassword, setServerPassword] = createSignal<string | null>(null)
   const platform = createPlatform(() => serverPassword())
 
-  async function handleClick(e: MouseEvent) {
+  function handleClick(e: MouseEvent) {
     const link = (e.target as HTMLElement).closest("a") as HTMLAnchorElement | null
     if (!link?.href) return
 
@@ -354,13 +354,19 @@ render(() => {
     const isExternal = link.href.startsWith("http://") || link.href.startsWith("https://")
     if (!isExternal) return
 
-    // Check user preference
-    const openExternally = await shouldOpenLinksExternally()
-    if (openExternally) {
-      e.preventDefault()
-      platform.openLink(link.href)
-    }
-    // If not opening externally, let the default behavior happen (opens in app)
+    // MUST preventDefault immediately (before any async), otherwise browser handles it
+    e.preventDefault()
+    const url = link.href
+
+    // Check user preference and handle accordingly
+    shouldOpenLinksExternally().then((openExternally) => {
+      if (openExternally) {
+        platform.openLink(url)
+      } else {
+        // Open in app by navigating
+        window.location.href = url
+      }
+    })
   }
 
   onMount(() => {
