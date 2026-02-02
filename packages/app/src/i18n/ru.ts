@@ -536,12 +536,11 @@ export const dict = {
   "settings.general.section.appearance": "Внешний вид",
   "settings.general.section.notifications": "Системные уведомления",
   "settings.general.section.updates": "Обновления",
-  "settings.general.section.sounds": "Sound effects",
+  "settings.general.section.sounds": "Звуковые эффекты",
   "settings.general.section.desktop": "Desktop",
 
-  "settings.general.desktop.dynamicSort.title": "Dynamic sidebar sorting",
-  "settings.general.desktop.dynamicSort.description":
-    "Automatically move active projects and sessions to the top when Claude starts working on them",
+  "settings.general.desktop.dynamicSort.title": "Динамическая сортировка боковой панели",
+  "settings.general.desktop.dynamicSort.description": "Перемещать недавно активные проекты наверх",
 
   "settings.general.row.language.title": "Язык",
   "settings.general.row.language.description": "Изменить язык отображения OpenCode",

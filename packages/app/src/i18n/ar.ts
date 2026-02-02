@@ -527,12 +527,11 @@ export const dict = {
   "settings.general.section.appearance": "المظهر",
   "settings.general.section.notifications": "إشعارات النظام",
   "settings.general.section.updates": "التحديثات",
-  "settings.general.section.sounds": "Sound effects",
+  "settings.general.section.sounds": "المؤثرات الصوتية",
   "settings.general.section.desktop": "Desktop",
 
-  "settings.general.desktop.dynamicSort.title": "Dynamic sidebar sorting",
-  "settings.general.desktop.dynamicSort.description":
-    "Automatically move active projects and sessions to the top when Claude starts working on them",
+  "settings.general.desktop.dynamicSort.title": "ترتيب ديناميكي للشريط الجانبي",
+  "settings.general.desktop.dynamicSort.description": "نقل المشاريع النشطة مؤخراً إلى الأعلى",
 
   "settings.general.row.language.title": "اللغة",
   "settings.general.row.language.description": "تغيير لغة العرض لـ OpenCode",
