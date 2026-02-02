@@ -530,7 +530,11 @@ export const dict = {
   "settings.general.section.appearance": "모양",
   "settings.general.section.notifications": "시스템 알림",
   "settings.general.section.updates": "업데이트",
-  "settings.general.section.sounds": "효과음",
+  "settings.general.section.sounds": "Sound effects",
+  "settings.general.section.desktop": "Desktop",
+
+  "settings.general.desktop.dynamicSort.title": "Dynamic sidebar sorting",
+  "settings.general.desktop.dynamicSort.description": "Automatically move active projects and sessions to the top when Claude starts working on them",
 
   "settings.general.row.language.title": "언어",
   "settings.general.row.language.description": "OpenCode 표시 언어 변경",

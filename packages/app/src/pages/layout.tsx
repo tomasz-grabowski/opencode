@@ -2134,12 +2134,19 @@ export default function Layout(props: ParentProps) {
       pendingRename: false,
     })
     const slug = createMemo(() => base64Encode(props.directory))
-    const sessions = createMemo(() =>
-      workspaceStore.session
+    const sessions = createMemo(() => {
+      const filtered = workspaceStore.session
         .filter((session) => session.directory === workspaceStore.path.directory)
         .filter((session) => !session.parentID && !session.time?.archived)
-        .toSorted(sortSessions(Date.now())),
-    )
+      if (!server.dynamicSort.enabled()) return filtered.toSorted(sortSessions(Date.now()))
+      // Sort by session_active timestamp (most recent first), then by time.updated
+      return filtered.toSorted((a, b) => {
+        const aActive = workspaceStore.session_active[a.id] ?? 0
+        const bActive = workspaceStore.session_active[b.id] ?? 0
+        if (aActive !== bActive) return bActive - aActive
+        return (b.time.updated ?? b.time.created) - (a.time.updated ?? a.time.created)
+      })
+    })
     const children = createMemo(() => {
       const map = new Map<string, string[]>()
       for (const session of workspaceStore.session) {
@@ -2601,12 +2608,19 @@ export default function Layout(props: ParentProps) {
   const LocalWorkspace = (props: { project: LocalProject; mobile?: boolean }): JSX.Element => {
     const [workspaceStore, setWorkspaceStore] = globalSync.child(props.project.worktree)
     const slug = createMemo(() => base64Encode(props.project.worktree))
-    const sessions = createMemo(() =>
-      workspaceStore.session
+    const sessions = createMemo(() => {
+      const filtered = workspaceStore.session
         .filter((session) => session.directory === workspaceStore.path.directory)
         .filter((session) => !session.parentID && !session.time?.archived)
-        .toSorted(sortSessions(Date.now())),
-    )
+      if (!server.dynamicSort.enabled()) return filtered.toSorted(sortSessions(Date.now()))
+      // Sort by session_active timestamp (most recent first), then by time.updated
+      return filtered.toSorted((a, b) => {
+        const aActive = workspaceStore.session_active[a.id] ?? 0
+        const bActive = workspaceStore.session_active[b.id] ?? 0
+        if (aActive !== bActive) return bActive - aActive
+        return (b.time.updated ?? b.time.created) - (a.time.updated ?? a.time.created)
+      })
+    })
     const children = createMemo(() => {
       const map = new Map<string, string[]>()
       for (const session of workspaceStore.session) {

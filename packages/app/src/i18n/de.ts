@@ -535,6 +535,11 @@ export const dict = {
   "settings.general.section.notifications": "Systembenachrichtigungen",
   "settings.general.section.updates": "Updates",
   "settings.general.section.sounds": "Soundeffekte",
+  "settings.general.section.desktop": "Desktop",
+
+  "settings.general.desktop.dynamicSort.title": "Dynamische Seitenleisten-Sortierung",
+  "settings.general.desktop.dynamicSort.description":
+    "Aktive Projekte und Sitzungen automatisch nach oben verschieben, wenn Claude daran arbeitet",
 
   "settings.general.row.language.title": "Sprache",
   "settings.general.row.language.description": "Die Anzeigesprache für OpenCode ändern",

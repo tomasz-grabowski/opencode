@@ -44,6 +44,7 @@ import { getFilename } from "@opencode-ai/util/path"
 import { usePlatform } from "./platform"
 import { useLanguage } from "@/context/language"
 import { Persist, persisted } from "@/utils/persist"
+import { useServer } from "./server"
 
 type ProjectMeta = {
   name?: string
@@ -70,6 +71,9 @@ type State = {
   sessionTotal: number
   session_status: {
     [sessionID: string]: SessionStatus
+  }
+  session_active: {
+    [sessionID: string]: number
   }
   session_diff: {
     [sessionID: string]: FileDiff[]
@@ -135,6 +139,7 @@ function createGlobalSync() {
   const globalSDK = useGlobalSDK()
   const platform = usePlatform()
   const language = useLanguage()
+  const server = useServer()
   const owner = getOwner()
   if (!owner) throw new Error("GlobalSync must be created within owner")
   const vcsCache = new Map<string, VcsCache>()
@@ -393,6 +398,7 @@ function createGlobalSync() {
           session: [],
           sessionTotal: 0,
           session_status: {},
+          session_active: {},
           session_diff: {},
           todo: {},
           permission: {},
@@ -779,6 +785,11 @@ function createGlobalSync() {
         break
       case "session.status": {
         setStore("session_status", event.properties.sessionID, reconcile(event.properties.status))
+        // Move project to top and mark session as active when Claude starts working
+        if (event.properties.status.type === "busy" && server.dynamicSort.enabled()) {
+          server.projects.bringToTop(directory)
+          setStore("session_active", event.properties.sessionID, Date.now())
+        }
         break
       }
       case "message.updated": {
