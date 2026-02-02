@@ -1117,6 +1117,10 @@ export namespace Config {
           prune: z.boolean().optional().describe("Enable pruning of old tool outputs (default: true)"),
         })
         .optional(),
+      yolo: z
+        .boolean()
+        .optional()
+        .describe("Enable YOLO mode - auto-approve all permission prompts (except explicit deny rules)"),
       experimental: z
         .object({
           disable_paste_summary: z.boolean().optional(),
