@@ -533,6 +533,10 @@ export const dict = {
   "settings.general.section.notifications": "Systemvarsler",
   "settings.general.section.updates": "Oppdateringer",
   "settings.general.section.sounds": "Lydeffekter",
+  "settings.general.section.desktop": "Desktop",
+  "settings.general.desktop.openLinksExternally.title": "Åpne lenker i ekstern nettleser",
+  "settings.general.desktop.openLinksExternally.description":
+    "Når aktivert, åpnes lenker i standard systemnettleseren i stedet for i appen",
 
   "settings.general.row.language.title": "Språk",
   "settings.general.row.language.description": "Endre visningsspråket for OpenCode",

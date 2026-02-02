@@ -528,6 +528,10 @@ export const dict = {
   "settings.general.section.notifications": "系统通知",
   "settings.general.section.updates": "更新",
   "settings.general.section.sounds": "音效",
+  "settings.general.section.desktop": "Desktop",
+  "settings.general.desktop.openLinksExternally.title": "在外部浏览器中打开链接",
+  "settings.general.desktop.openLinksExternally.description":
+    "启用后，点击链接将在系统默认浏览器中打开，而不是在应用内打开",
 
   "settings.general.row.language.title": "语言",
   "settings.general.row.language.description": "更改 OpenCode 的显示语言",

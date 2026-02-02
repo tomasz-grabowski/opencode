@@ -535,6 +535,10 @@ export const dict = {
   "settings.general.section.notifications": "Системные уведомления",
   "settings.general.section.updates": "Обновления",
   "settings.general.section.sounds": "Звуковые эффекты",
+  "settings.general.section.desktop": "Desktop",
+  "settings.general.desktop.openLinksExternally.title": "Открывать ссылки во внешнем браузере",
+  "settings.general.desktop.openLinksExternally.description":
+    "При включении ссылки будут открываться в системном браузере по умолчанию, а не внутри приложения",
 
   "settings.general.row.language.title": "Язык",
   "settings.general.row.language.description": "Изменить язык отображения OpenCode",
