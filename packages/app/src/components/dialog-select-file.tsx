@@ -1,17 +1,23 @@
+import type { Session } from "@opencode-ai/sdk/v2/client"
+import { Avatar } from "@opencode-ai/ui/avatar"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { Dialog } from "@opencode-ai/ui/dialog"
 import { FileIcon } from "@opencode-ai/ui/file-icon"
+import { Icon } from "@opencode-ai/ui/icon"
 import { Keybind } from "@opencode-ai/ui/keybind"
 import { List } from "@opencode-ai/ui/list"
 import { getDirectory, getFilename } from "@opencode-ai/util/path"
-import { useParams } from "@solidjs/router"
-import { createMemo, createSignal, onCleanup, Show } from "solid-js"
+import { useNavigate, useParams } from "@solidjs/router"
+import { createMemo, createSignal, Match, onCleanup, Show, Switch } from "solid-js"
+import { base64Encode } from "@opencode-ai/util/encode"
 import { formatKeybind, useCommand, type CommandOption } from "@/context/command"
-import { useLayout } from "@/context/layout"
 import { useFile } from "@/context/file"
+import { useGlobalSync } from "@/context/global-sync"
 import { useLanguage } from "@/context/language"
+import { getAvatarColors, useLayout, type LocalProject } from "@/context/layout"
+import { useServer } from "@/context/server"
 
-type EntryType = "command" | "file"
+type EntryType = "command" | "file" | "project" | "session"
 
 type Entry = {
   id: string
@@ -30,8 +36,11 @@ export function DialogSelectFile(props: { mode?: DialogSelectFileMode; onOpenFil
   const command = useCommand()
   const language = useLanguage()
   const layout = useLayout()
+  const globalSync = useGlobalSync()
+  const server = useServer()
   const file = useFile()
   const dialog = useDialog()
+  const nav = useNavigate()
   const params = useParams()
   const filesOnly = () => props.mode === "files"
   const sessionKey = createMemo(() => `${params.dir}${params.id ? "/" + params.id : ""}`)
@@ -73,6 +82,39 @@ export function DialogSelectFile(props: { mode?: DialogSelectFileMode; onOpenFil
     path,
   })
 
+  const projectItem = (project: LocalProject): Entry => ({
+    id: "project:" + project.worktree,
+    type: "project",
+    title: project.name || getFilename(project.worktree),
+    description: project.worktree,
+    category: language.t("palette.group.projects"),
+    path: project.worktree,
+  })
+
+  const sessionItem = (session: Session, project: LocalProject): Entry => ({
+    id: "session:" + session.id,
+    type: "session",
+    title: session.title,
+    description: project.name || getFilename(project.worktree),
+    category: language.t("palette.group.sessions"),
+    path: `${session.directory}\0${session.id}`,
+  })
+
+  const projectList = createMemo(() => layout.projects.list())
+  const projectLookup = createMemo(() => new Map(projectList().map((p) => [p.worktree, p])))
+  const projects = createMemo(() => projectList().map(projectItem))
+  const sessions = createMemo(() => {
+    const result: Entry[] = []
+    for (const project of projectList()) {
+      const [store] = globalSync.child(project.worktree, { bootstrap: false })
+      for (const session of store.session) {
+        if (session.parentID) continue
+        if (session.time?.archived) continue
+        result.push(sessionItem(session, project))
+      }
+    }
+    return result
+  })
   const list = createMemo(() => allowed().map(commandItem))
 
   const picks = createMemo(() => {
@@ -148,7 +190,7 @@ export function DialogSelectFile(props: { mode?: DialogSelectFileMode; onOpenFil
     }
     const files = await file.searchFiles(query)
     const entries = files.map(fileItem)
-    return [...list(), ...entries]
+    return [...projects(), ...sessions(), ...list(), ...entries]
   }
 
   const handleMove = (item: Entry | undefined) => {
@@ -175,6 +217,19 @@ export function DialogSelectFile(props: { mode?: DialogSelectFileMode; onOpenFil
 
     if (item.type === "command") {
       item.option?.onSelect?.("palette")
+      return
+    }
+
+    if (item.type === "project" && item.path) {
+      server.projects.touch(item.path)
+      nav(`/${base64Encode(item.path)}`)
+      return
+    }
+
+    if (item.type === "session" && item.path) {
+      const [directory, sessionId] = item.path.split("\0")
+      server.projects.touch(directory)
+      nav(`/${base64Encode(directory)}/session/${sessionId}`)
       return
     }
 
@@ -207,9 +262,55 @@ export function DialogSelectFile(props: { mode?: DialogSelectFileMode; onOpenFil
         onSelect={handleSelect}
       >
         {(item) => (
-          <Show
-            when={item.type === "command"}
-            fallback={
+          <Switch>
+            <Match when={item.type === "command"}>
+              <div class="w-full flex items-center justify-between gap-4">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="text-14-regular text-text-strong whitespace-nowrap">{item.title}</span>
+                  <Show when={item.description}>
+                    <span class="text-14-regular text-text-weak truncate">{item.description}</span>
+                  </Show>
+                </div>
+                <Show when={item.keybind}>
+                  <Keybind class="rounded-[4px]">{formatKeybind(item.keybind ?? "")}</Keybind>
+                </Show>
+              </div>
+            </Match>
+            <Match when={item.type === "project"}>
+              {(() => {
+                const project = projectLookup().get(item.path ?? "")
+                const icon = project?.icon as { override?: string; color?: string } | undefined
+                return (
+                  <div class="w-full flex items-center justify-between rounded-md pl-1">
+                    <div class="flex items-center gap-x-3 grow min-w-0">
+                      <Avatar
+                        fallback={item.title}
+                        src={icon?.override}
+                        {...getAvatarColors(icon?.color)}
+                        size="small"
+                        class="shrink-0"
+                      />
+                      <div class="flex items-center gap-1.5 text-14-regular min-w-0">
+                        <span class="text-text-strong whitespace-nowrap">{item.title}</span>
+                        <span class="text-text-weak truncate min-w-0">{item.description}</span>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
+            </Match>
+            <Match when={item.type === "session"}>
+              <div class="w-full flex items-center justify-between rounded-md pl-1">
+                <div class="flex items-center gap-x-3 grow min-w-0">
+                  <Icon name="comment" size="small" class="shrink-0 text-icon-weak" />
+                  <div class="flex items-center gap-1.5 text-14-regular min-w-0">
+                    <span class="text-text-strong whitespace-nowrap">{item.title}</span>
+                    <span class="text-text-weak truncate min-w-0">{item.description}</span>
+                  </div>
+                </div>
+              </div>
+            </Match>
+            <Match when={item.type === "file"}>
               <div class="w-full flex items-center justify-between rounded-md pl-1">
                 <div class="flex items-center gap-x-3 grow min-w-0">
                   <FileIcon node={{ path: item.path ?? "", type: "file" }} class="shrink-0 size-4" />
@@ -221,20 +322,8 @@ export function DialogSelectFile(props: { mode?: DialogSelectFileMode; onOpenFil
                   </div>
                 </div>
               </div>
-            }
-          >
-            <div class="w-full flex items-center justify-between gap-4">
-              <div class="flex items-center gap-2 min-w-0">
-                <span class="text-14-regular text-text-strong whitespace-nowrap">{item.title}</span>
-                <Show when={item.description}>
-                  <span class="text-14-regular text-text-weak truncate">{item.description}</span>
-                </Show>
-              </div>
-              <Show when={item.keybind}>
-                <Keybind class="rounded-[4px]">{formatKeybind(item.keybind ?? "")}</Keybind>
-              </Show>
-            </div>
-          </Show>
+            </Match>
+          </Switch>
         )}
       </List>
     </Dialog>

@@ -88,6 +88,8 @@ export const dict = {
   "palette.empty": "لا توجد نتائج",
   "palette.group.commands": "الأوامر",
   "palette.group.files": "الملفات",
+  "palette.group.projects": "المشاريع",
+  "palette.group.sessions": "الجلسات",
 
   "dialog.provider.search.placeholder": "البحث عن موفرين",
   "dialog.provider.empty": "لم يتم العثور على موفرين",

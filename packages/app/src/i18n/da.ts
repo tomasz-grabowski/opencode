@@ -88,6 +88,8 @@ export const dict = {
   "palette.empty": "Ingen resultater fundet",
   "palette.group.commands": "Kommandoer",
   "palette.group.files": "Filer",
+  "palette.group.projects": "Projekter",
+  "palette.group.sessions": "Sessioner",
 
   "dialog.provider.search.placeholder": "Søg udbydere",
   "dialog.provider.empty": "Ingen udbydere fundet",

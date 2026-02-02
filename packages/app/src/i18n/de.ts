@@ -92,6 +92,8 @@ export const dict = {
   "palette.empty": "Keine Ergebnisse gefunden",
   "palette.group.commands": "Befehle",
   "palette.group.files": "Dateien",
+  "palette.group.projects": "Projekte",
+  "palette.group.sessions": "Sitzungen",
 
   "dialog.provider.search.placeholder": "Anbieter durchsuchen",
   "dialog.provider.empty": "Keine Anbieter gefunden",

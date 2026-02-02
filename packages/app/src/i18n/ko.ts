@@ -92,6 +92,8 @@ export const dict = {
   "palette.empty": "결과 없음",
   "palette.group.commands": "명령어",
   "palette.group.files": "파일",
+  "palette.group.projects": "프로젝트",
+  "palette.group.sessions": "세션",
 
   "dialog.provider.search.placeholder": "공급자 검색",
   "dialog.provider.empty": "공급자 없음",

@@ -88,6 +88,8 @@ export const dict = {
   "palette.empty": "Nenhum resultado encontrado",
   "palette.group.commands": "Comandos",
   "palette.group.files": "Arquivos",
+  "palette.group.projects": "Projetos",
+  "palette.group.sessions": "Sessões",
 
   "dialog.provider.search.placeholder": "Buscar provedores",
   "dialog.provider.empty": "Nenhum provedor encontrado",
