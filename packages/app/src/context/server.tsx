@@ -5,7 +5,7 @@ import { createStore } from "solid-js/store"
 import { usePlatform } from "@/context/platform"
 import { Persist, persisted } from "@/utils/persist"
 
-type StoredProject = { worktree: string; expanded: boolean; lastUsed?: number }
+type StoredProject = { worktree: string; expanded: boolean; lastUsed?: number; pinned?: boolean }
 
 export function normalizeServerUrl(input: string) {
   const trimmed = input.trim()
@@ -220,9 +220,38 @@ export const { use: useServer, provider: ServerProvider } = createSimpleContext(
           const current = store.projects[key] ?? []
           const index = current.findIndex((x) => x.worktree === directory)
           if (index <= 0) return
+          if (current[index].pinned) return
           const project = { ...current[index], lastUsed: Date.now() }
           const rest = current.filter((_, i) => i !== index)
-          setStore("projects", key, [project, ...rest])
+          const insertAt = rest.findIndex((x) => !x.pinned)
+          const result = [...rest]
+          result.splice(insertAt === -1 ? rest.length : insertAt, 0, project)
+          setStore("projects", key, result)
+        },
+        pin(directory: string) {
+          const key = origin()
+          if (!key) return
+          const current = store.projects[key] ?? []
+          const index = current.findIndex((x) => x.worktree === directory)
+          if (index === -1) return
+          const project = { ...current[index], pinned: true }
+          const rest = current.filter((_, i) => i !== index)
+          const lastPinned = rest.findLastIndex((x) => x.pinned)
+          const result = [...rest]
+          result.splice(lastPinned + 1, 0, project)
+          setStore("projects", key, result)
+        },
+        unpin(directory: string) {
+          const key = origin()
+          if (!key) return
+          const current = store.projects[key] ?? []
+          const index = current.findIndex((x) => x.worktree === directory)
+          if (index === -1) return
+          setStore("projects", key, index, "pinned", false)
+        },
+        isPinned(directory: string) {
+          const current = store.projects[origin()] ?? []
+          return current.find((x) => x.worktree === directory)?.pinned ?? false
         },
       },
       dynamicSort: {
