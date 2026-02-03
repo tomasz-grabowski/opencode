@@ -2471,6 +2471,21 @@ export default function Layout(props: ParentProps) {
               <ContextMenu.ItemLabel>{language.t("common.edit")}</ContextMenu.ItemLabel>
             </ContextMenu.Item>
             <ContextMenu.Item
+              data-action="project-pin-toggle"
+              data-project={base64Encode(props.project.worktree)}
+              onSelect={() => {
+                server.projects.isPinned(props.project.worktree)
+                  ? server.projects.unpin(props.project.worktree)
+                  : server.projects.pin(props.project.worktree)
+              }}
+            >
+              <ContextMenu.ItemLabel>
+                {server.projects.isPinned(props.project.worktree)
+                  ? language.t("sidebar.project.unpin")
+                  : language.t("sidebar.project.pin")}
+              </ContextMenu.ItemLabel>
+            </ContextMenu.Item>
+            <ContextMenu.Item
               data-action="project-workspaces-toggle"
               data-project={base64Encode(props.project.worktree)}
               disabled={props.project.vcs !== "git" && !layout.sidebar.workspaces(props.project.worktree)()}
