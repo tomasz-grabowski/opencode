@@ -1,4 +1,4 @@
-import { Component, createMemo, type JSX } from "solid-js"
+import { Component, createMemo, Show, type JSX } from "solid-js"
 import { createStore } from "solid-js/store"
 import { Button } from "@opencode-ai/ui/button"
 import { Select } from "@opencode-ai/ui/select"
@@ -410,6 +410,36 @@ export const SettingsGeneral: Component = () => {
             </SettingsRow>
           </div>
         </div>
+        {/* Desktop Section */}
+        <Show when={platform.platform === "desktop"}>
+          <div class="flex flex-col gap-1">
+            <h3 class="text-14-medium text-text-strong pb-2">{language.t("settings.general.section.desktop")}</h3>
+            <div class="bg-surface-raised-base px-4 rounded-lg">
+              <SettingsRow
+                title={language.t("settings.general.desktop.paletteProjects.title")}
+                description={language.t("settings.general.desktop.paletteProjects.description")}
+              >
+                <div data-action="settings-palette-projects">
+                  <Switch
+                    checked={settings.palette.showProjects()}
+                    onChange={(checked) => settings.palette.setShowProjects(checked)}
+                  />
+                </div>
+              </SettingsRow>
+              <SettingsRow
+                title={language.t("settings.general.desktop.paletteSessions.title")}
+                description={language.t("settings.general.desktop.paletteSessions.description")}
+              >
+                <div data-action="settings-palette-sessions">
+                  <Switch
+                    checked={settings.palette.showSessions()}
+                    onChange={(checked) => settings.palette.setShowSessions(checked)}
+                  />
+                </div>
+              </SettingsRow>
+            </div>
+          </div>
+        </Show>
       </div>
     </div>
   )

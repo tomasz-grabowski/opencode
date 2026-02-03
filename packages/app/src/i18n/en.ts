@@ -544,6 +544,11 @@ export const dict = {
   "settings.general.section.notifications": "System notifications",
   "settings.general.section.updates": "Updates",
   "settings.general.section.sounds": "Sound effects",
+  "settings.general.section.desktop": "Desktop",
+  "settings.general.desktop.paletteProjects.title": "Show projects in command palette",
+  "settings.general.desktop.paletteProjects.description": "Include projects in Cmd+P search results",
+  "settings.general.desktop.paletteSessions.title": "Show sessions in command palette",
+  "settings.general.desktop.paletteSessions.description": "Include sessions in Cmd+P search results",
 
   "settings.general.row.language.title": "Language",
   "settings.general.row.language.description": "Change the display language for OpenCode",

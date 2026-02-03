@@ -31,6 +31,10 @@ export interface Settings {
   permissions: {
     autoApprove: boolean
   }
+  palette: {
+    showProjects: boolean
+    showSessions: boolean
+  }
   notifications: NotificationSettings
   sounds: SoundSettings
 }
@@ -48,6 +52,10 @@ const defaultSettings: Settings = {
     font: "ibm-plex-mono",
   },
   keybinds: {},
+  palette: {
+    showProjects: true,
+    showSessions: true,
+  },
   permissions: {
     autoApprove: false,
   },
@@ -136,6 +144,16 @@ export const { use: useSettings, provider: SettingsProvider } = createSimpleCont
         },
         resetAll() {
           setStore("keybinds", reconcile({}))
+        },
+      },
+      palette: {
+        showProjects: createMemo(() => store.palette?.showProjects ?? defaultSettings.palette.showProjects),
+        setShowProjects(value: boolean) {
+          setStore("palette", "showProjects", value)
+        },
+        showSessions: createMemo(() => store.palette?.showSessions ?? defaultSettings.palette.showSessions),
+        setShowSessions(value: boolean) {
+          setStore("palette", "showSessions", value)
         },
       },
       permissions: {

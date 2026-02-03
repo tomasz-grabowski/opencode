@@ -536,6 +536,11 @@ export const dict = {
   "settings.general.section.notifications": "การแจ้งเตือนระบบ",
   "settings.general.section.updates": "การอัปเดต",
   "settings.general.section.sounds": "เสียงเอฟเฟกต์",
+  "settings.general.section.desktop": "เดสก์ท็อป",
+  "settings.general.desktop.paletteProjects.title": "แสดงโปรเจกต์ในพาเลตคำสั่ง",
+  "settings.general.desktop.paletteProjects.description": "รวมโปรเจกต์ในผลการค้นหา Cmd+P",
+  "settings.general.desktop.paletteSessions.title": "แสดงเซสชันในพาเลตคำสั่ง",
+  "settings.general.desktop.paletteSessions.description": "รวมเซสชันในผลการค้นหา Cmd+P",
 
   "settings.general.row.language.title": "ภาษา",
   "settings.general.row.language.description": "เปลี่ยนภาษาที่แสดงสำหรับ OpenCode",

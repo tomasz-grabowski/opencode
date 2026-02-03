@@ -533,6 +533,11 @@ export const dict = {
   "settings.general.section.notifications": "시스템 알림",
   "settings.general.section.updates": "업데이트",
   "settings.general.section.sounds": "효과음",
+  "settings.general.section.desktop": "데스크톱",
+  "settings.general.desktop.paletteProjects.title": "명령 팔레트에 프로젝트 표시",
+  "settings.general.desktop.paletteProjects.description": "Cmd+P 검색 결과에 프로젝트 포함",
+  "settings.general.desktop.paletteSessions.title": "명령 팔레트에 세션 표시",
+  "settings.general.desktop.paletteSessions.description": "Cmd+P 검색 결과에 세션 포함",
 
   "settings.general.row.language.title": "언어",
   "settings.general.row.language.description": "OpenCode 표시 언어 변경",

@@ -528,6 +528,11 @@ export const dict = {
   "settings.general.section.notifications": "إشعارات النظام",
   "settings.general.section.updates": "التحديثات",
   "settings.general.section.sounds": "المؤثرات الصوتية",
+  "settings.general.section.desktop": "سطح المكتب",
+  "settings.general.desktop.paletteProjects.title": "إظهار المشاريع في لوحة الأوامر",
+  "settings.general.desktop.paletteProjects.description": "تضمين المشاريع في نتائج بحث Cmd+P",
+  "settings.general.desktop.paletteSessions.title": "إظهار الجلسات في لوحة الأوامر",
+  "settings.general.desktop.paletteSessions.description": "تضمين الجلسات في نتائج بحث Cmd+P",
 
   "settings.general.row.language.title": "اللغة",
   "settings.general.row.language.description": "تغيير لغة العرض لـ OpenCode",

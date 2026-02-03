@@ -527,6 +527,11 @@ export const dict = {
   "settings.general.section.notifications": "システム通知",
   "settings.general.section.updates": "アップデート",
   "settings.general.section.sounds": "効果音",
+  "settings.general.section.desktop": "デスクトップ",
+  "settings.general.desktop.paletteProjects.title": "コマンドパレットにプロジェクトを表示",
+  "settings.general.desktop.paletteProjects.description": "Cmd+Pの検索結果にプロジェクトを含める",
+  "settings.general.desktop.paletteSessions.title": "コマンドパレットにセッションを表示",
+  "settings.general.desktop.paletteSessions.description": "Cmd+Pの検索結果にセッションを含める",
 
   "settings.general.row.language.title": "言語",
   "settings.general.row.language.description": "OpenCodeの表示言語を変更します",

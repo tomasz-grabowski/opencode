@@ -16,6 +16,7 @@ import { useGlobalSync } from "@/context/global-sync"
 import { useLanguage } from "@/context/language"
 import { getAvatarColors, useLayout, type LocalProject } from "@/context/layout"
 import { useServer } from "@/context/server"
+import { useSettings } from "@/context/settings"
 
 type EntryType = "command" | "file" | "project" | "session"
 
@@ -38,6 +39,7 @@ export function DialogSelectFile(props: { mode?: DialogSelectFileMode; onOpenFil
   const layout = useLayout()
   const globalSync = useGlobalSync()
   const server = useServer()
+  const settings = useSettings()
   const file = useFile()
   const dialog = useDialog()
   const nav = useNavigate()
@@ -56,6 +58,15 @@ export function DialogSelectFile(props: { mode?: DialogSelectFileMode; onOpenFil
     "review.toggle",
   ]
   const limit = 5
+  const groupOrder = createMemo(() => {
+    const order = [
+      language.t("palette.group.projects"),
+      language.t("palette.group.sessions"),
+      language.t("palette.group.commands"),
+      language.t("palette.group.files"),
+    ]
+    return new Map(order.map((name, i) => [name, i]))
+  })
 
   const allowed = createMemo(() => {
     if (filesOnly()) return []
@@ -190,7 +201,12 @@ export function DialogSelectFile(props: { mode?: DialogSelectFileMode; onOpenFil
     }
     const files = await file.searchFiles(query)
     const entries = files.map(fileItem)
-    return [...projects(), ...sessions(), ...list(), ...entries]
+    return [
+      ...(settings.palette.showProjects() ? projects() : []),
+      ...(settings.palette.showSessions() ? sessions() : []),
+      ...list(),
+      ...entries,
+    ]
   }
 
   const handleMove = (item: Entry | undefined) => {
@@ -258,6 +274,7 @@ export function DialogSelectFile(props: { mode?: DialogSelectFileMode; onOpenFil
         key={(item) => item.id}
         filterKeys={["title", "description", "category"]}
         groupBy={(item) => item.category}
+        sortGroupsBy={(a, b) => (groupOrder().get(a.category) ?? 99) - (groupOrder().get(b.category) ?? 99)}
         onMove={handleMove}
         onSelect={handleSelect}
       >

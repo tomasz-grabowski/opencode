@@ -527,6 +527,11 @@ export const dict = {
   "settings.general.section.notifications": "系統通知",
   "settings.general.section.updates": "更新",
   "settings.general.section.sounds": "音效",
+  "settings.general.section.desktop": "桌面",
+  "settings.general.desktop.paletteProjects.title": "在命令面板中顯示專案",
+  "settings.general.desktop.paletteProjects.description": "在 Cmd+P 搜尋結果中包含專案",
+  "settings.general.desktop.paletteSessions.title": "在命令面板中顯示工作階段",
+  "settings.general.desktop.paletteSessions.description": "在 Cmd+P 搜尋結果中包含工作階段",
 
   "settings.general.row.language.title": "語言",
   "settings.general.row.language.description": "變更 OpenCode 的顯示語言",

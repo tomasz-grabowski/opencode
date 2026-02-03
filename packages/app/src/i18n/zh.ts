@@ -530,6 +530,11 @@ export const dict = {
   "settings.general.section.notifications": "系统通知",
   "settings.general.section.updates": "更新",
   "settings.general.section.sounds": "音效",
+  "settings.general.section.desktop": "桌面",
+  "settings.general.desktop.paletteProjects.title": "在命令面板中显示项目",
+  "settings.general.desktop.paletteProjects.description": "在 Cmd+P 搜索结果中包含项目",
+  "settings.general.desktop.paletteSessions.title": "在命令面板中显示会话",
+  "settings.general.desktop.paletteSessions.description": "在 Cmd+P 搜索结果中包含会话",
 
   "settings.general.row.language.title": "语言",
   "settings.general.row.language.description": "更改 OpenCode 的显示语言",
