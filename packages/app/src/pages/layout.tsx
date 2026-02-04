@@ -99,6 +99,7 @@ export default function Layout(props: ParentProps) {
   const layout = useLayout()
   const layoutReady = createMemo(() => layout.ready())
   const platform = usePlatform()
+  const isMirror = platform.platform === "desktop" && !platform.storage
   const settings = useSettings()
   const server = useServer()
   const notification = useNotification()
@@ -2952,7 +2953,7 @@ export default function Layout(props: ParentProps) {
                     {(project) => <SortableProject project={project} mobile={sidebarProps.mobile} />}
                   </For>
                 </SortableProvider>
-                <Show when={platform.storage}>
+                <Show when={!isMirror}>
                   <Tooltip
                     placement={sidebarProps.mobile ? "bottom" : "right"}
                     value={
