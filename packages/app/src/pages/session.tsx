@@ -37,6 +37,7 @@ import { DragDropProvider, DragDropSensors, DragOverlay, SortableProvider, close
 import type { DragEvent } from "@thisbeyond/solid-dnd"
 import { useSync } from "@/context/sync"
 import { useTerminal, type LocalPTY } from "@/context/terminal"
+import { usePlatform } from "@/context/platform"
 import { useLayout } from "@/context/layout"
 import { Terminal } from "@/components/terminal"
 import { checksum, base64Encode } from "@opencode-ai/util/encode"
@@ -230,6 +231,8 @@ export default function Page() {
   const file = useFile()
   const sync = useSync()
   const terminal = useTerminal()
+  const mirrorPlatform = usePlatform()
+  const isMirror = mirrorPlatform.platform === "desktop" && !mirrorPlatform.storage
   const dialog = useDialog()
   const codeComponent = useCodeComponent()
   const command = useCommand()
@@ -550,6 +553,7 @@ export default function Page() {
   })
 
   createEffect(() => {
+    if (isMirror) return
     if (!view().terminal.opened()) {
       setUi("autoCreated", false)
       return
@@ -730,15 +734,19 @@ export default function Page() {
         addSelectionToContext(path, selectionFromLines(range))
       },
     },
-    {
-      id: "terminal.toggle",
-      title: language.t("command.terminal.toggle"),
-      description: "",
-      category: language.t("command.category.view"),
-      keybind: "ctrl+`",
-      slash: "terminal",
-      onSelect: () => view().terminal.toggle(),
-    },
+    ...(!isMirror
+      ? [
+          {
+            id: "terminal.toggle",
+            title: language.t("command.terminal.toggle"),
+            description: "",
+            category: language.t("command.category.view"),
+            keybind: "ctrl+`",
+            slash: "terminal",
+            onSelect: () => view().terminal.toggle(),
+          },
+        ]
+      : []),
     {
       id: "review.toggle",
       title: language.t("command.review.toggle"),
@@ -747,17 +755,21 @@ export default function Page() {
       keybind: "mod+shift+r",
       onSelect: () => layout.fileTree.toggle(),
     },
-    {
-      id: "terminal.new",
-      title: language.t("command.terminal.new"),
-      description: language.t("command.terminal.new.description"),
-      category: language.t("command.category.terminal"),
-      keybind: "ctrl+alt+t",
-      onSelect: () => {
-        if (terminal.all().length > 0) terminal.new()
-        view().terminal.open()
-      },
-    },
+    ...(!isMirror
+      ? [
+          {
+            id: "terminal.new",
+            title: language.t("command.terminal.new"),
+            description: language.t("command.terminal.new.description"),
+            category: language.t("command.category.terminal"),
+            keybind: "ctrl+alt+t",
+            onSelect: () => {
+              if (terminal.all().length > 0) terminal.new()
+              view().terminal.open()
+            },
+          },
+        ]
+      : []),
     {
       id: "steps.toggle",
       title: language.t("command.steps.toggle"),
@@ -2930,7 +2942,7 @@ export default function Page() {
         </Show>
       </div>
 
-      <Show when={isDesktop() && view().terminal.opened()}>
+      <Show when={!isMirror && isDesktop() && view().terminal.opened()}>
         <div
           id="terminal-panel"
           role="region"

@@ -727,4 +727,23 @@ export const dict = {
   "workspace.reset.archived.one": "ستتم أرشفة جلسة واحدة.",
   "workspace.reset.archived.many": "ستتم أرشفة {{count}} جلسات.",
   "workspace.reset.note": "سيؤدي هذا إلى إعادة تعيين مساحة العمل لتتطابق مع الفرع الافتراضي.",
+
+  "status.popover.webMirror": "مرآة الويب",
+  "settings.general.webMirror.title": "مرآة الويب",
+  "settings.general.webMirror.active": "نشط",
+  "settings.general.webMirror.description":
+    "كشف خادم سطح المكتب لشبكتك المحلية. الوصول إلى نفس الجلسة بالضبط من أي متصفح — مرآة حقيقية 1:1 مع تحديثات مباشرة.",
+  "settings.general.webMirror.enabled.title": "تفعيل مرآة الويب",
+  "settings.general.webMirror.enabled.description": "كشف الخادم تلقائيًا عند تشغيل تطبيق سطح المكتب",
+  "settings.general.webMirror.port.title": "المنفذ",
+  "settings.general.webMirror.port.description": "منفذ الشبكة للوصول عن بُعد",
+  "settings.general.webMirror.password.title": "كلمة المرور",
+  "settings.general.webMirror.password.description": "اتركه فارغًا لإنشاء كلمة مرور عشوائية تلقائيًا",
+  "settings.general.webMirror.password.placeholder": "مُولَّدة تلقائيًا",
+  "settings.general.webMirror.username.title": "اسم المستخدم",
+  "settings.general.webMirror.username.description": "اسم المستخدم لمصادقة HTTP الأساسية (الافتراضي: opencode)",
+  "settings.general.webMirror.credentials.restartHint":
+    "تصبح تغييرات اسم المستخدم وكلمة المرور سارية بعد إعادة تشغيل التطبيق.",
+  "settings.general.webMirror.localAccess": "الوصول المحلي:",
+  "settings.general.webMirror.networkAccess": "الوصول عبر الشبكة:",
 }

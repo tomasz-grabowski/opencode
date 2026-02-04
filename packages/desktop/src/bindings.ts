@@ -9,6 +9,9 @@ export const commands = {
   ensureServerReady: () => __TAURI_INVOKE<ServerReadyData>("ensure_server_ready"),
   getDefaultServerUrl: () => __TAURI_INVOKE<string | null>("get_default_server_url"),
   setDefaultServerUrl: (url: string | null) => __TAURI_INVOKE<null>("set_default_server_url", { url }),
+  startWebMirror: (config: WebMirrorConfig) => __TAURI_INVOKE<WebMirrorStatus>("start_web_mirror", { config }),
+  stopWebMirror: () => __TAURI_INVOKE<null>("stop_web_mirror"),
+  getWebMirrorStatus: () => __TAURI_INVOKE<WebMirrorStatus>("get_web_mirror_status"),
   parseMarkdownCommand: (markdown: string) => __TAURI_INVOKE<string>("parse_markdown_command", { markdown }),
 }
 
@@ -16,4 +19,20 @@ export const commands = {
 export type ServerReadyData = {
   url: string
   password: string | null
+}
+
+export type WebMirrorConfig = {
+  enabled: boolean
+  port: number | null
+  username: string | null
+  password: string | null
+}
+
+export type WebMirrorStatus = {
+  running: boolean
+  local_url: string | null
+  network_url: string | null
+  username: string
+  password: string
+  config: WebMirrorConfig
 }

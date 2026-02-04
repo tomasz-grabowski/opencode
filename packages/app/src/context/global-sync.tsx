@@ -181,6 +181,7 @@ function createGlobalSync() {
     provider_auth: ProviderAuthResponse
     config: Config
     reload: undefined | "pending" | "complete"
+    mirrorSidebar: Array<{ worktree: string; expanded: boolean }> | undefined
   }>({
     ready: false,
     path: { state: "", config: "", worktree: "", directory: "", home: "" },
@@ -189,6 +190,7 @@ function createGlobalSync() {
     provider_auth: {},
     config: {},
     reload: undefined,
+    mirrorSidebar: undefined,
   })
 
   const queued = new Set<string>()
@@ -646,6 +648,10 @@ function createGlobalSync() {
 
     if (directory === "global") {
       switch (event?.type) {
+        case "mirror.sidebar.updated" as string: {
+          setGlobalStore("mirrorSidebar", (event as any).properties)
+          return
+        }
         case "global.disposed": {
           refresh()
           return

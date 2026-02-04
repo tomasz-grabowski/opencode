@@ -725,4 +725,23 @@ export const dict = {
   "workspace.reset.archived.one": "1 เซสชันจะถูกจัดเก็บ",
   "workspace.reset.archived.many": "{{count}} เซสชันจะถูกจัดเก็บ",
   "workspace.reset.note": "สิ่งนี้จะรีเซ็ตพื้นที่ทำงานให้ตรงกับสาขาเริ่มต้น",
+
+  "status.popover.webMirror": "เว็บมิเรอร์",
+  "settings.general.webMirror.title": "เว็บมิเรอร์",
+  "settings.general.webMirror.active": "ใช้งานอยู่",
+  "settings.general.webMirror.description":
+    "เปิดเผยเซิร์ฟเวอร์เดสก์ท็อปไปยังเครือข่ายท้องถิ่นของคุณ เข้าถึงเซสชันเดียวกันจากเบราว์เซอร์ใดก็ได้ — มิเรอร์ 1:1 แท้จริงพร้อมการอัปเดตแบบเรียลไทม์",
+  "settings.general.webMirror.enabled.title": "เปิดใช้งานเว็บมิเรอร์",
+  "settings.general.webMirror.enabled.description": "เปิดเผยเซิร์ฟเวอร์โดยอัตโนมัติเมื่อแอปเดสก์ท็อปเปิดขึ้น",
+  "settings.general.webMirror.port.title": "พอร์ต",
+  "settings.general.webMirror.port.description": "พอร์ตเครือข่ายสำหรับการเข้าถึงระยะไกล",
+  "settings.general.webMirror.password.title": "รหัสผ่าน",
+  "settings.general.webMirror.password.description": "เว้นว่างเพื่อสร้างรหัสผ่านสุ่มโดยอัตโนมัติ",
+  "settings.general.webMirror.password.placeholder": "สร้างอัตโนมัติ",
+  "settings.general.webMirror.username.title": "ชื่อผู้ใช้",
+  "settings.general.webMirror.username.description":
+    "ชื่อผู้ใช้สำหรับการยืนยันตัวตน HTTP พื้นฐาน (ค่าเริ่มต้น: opencode)",
+  "settings.general.webMirror.credentials.restartHint": "การเปลี่ยนแปลงชื่อผู้ใช้และรหัสผ่านจะมีผลหลังจากรีสตาร์ทแอป",
+  "settings.general.webMirror.localAccess": "การเข้าถึงภายใน:",
+  "settings.general.webMirror.networkAccess": "การเข้าถึงเครือข่าย:",
 }

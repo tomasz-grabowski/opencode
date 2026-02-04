@@ -12,6 +12,7 @@
     "start": "vite",
     "dev": "vite",
     "build": "vite build",
+    "build:mirror": "vite build --config vite.mirror.config.ts",
     "serve": "vite preview",
     "test": "playwright test",
     "test:e2e": "playwright test",

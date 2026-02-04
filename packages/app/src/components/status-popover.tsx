@@ -11,7 +11,7 @@ import { Tooltip } from "@opencode-ai/ui/tooltip"
 import { useSync } from "@/context/sync"
 import { useSDK } from "@/context/sdk"
 import { normalizeServerUrl, serverDisplayName, useServer } from "@/context/server"
-import { usePlatform } from "@/context/platform"
+import { usePlatform, type WebMirrorStatus } from "@/context/platform"
 import { useLanguage } from "@/context/language"
 import { createOpencodeClient } from "@opencode-ai/sdk/v2/client"
 import { DialogSelectServer } from "./dialog-select-server"
@@ -45,6 +45,7 @@ export function StatusPopover() {
     status: {} as Record<string, ServerStatus | undefined>,
     loading: null as string | null,
     defaultServerUrl: undefined as string | undefined,
+    webMirror: null as WebMirrorStatus | null,
   })
 
   const servers = createMemo(() => {
@@ -84,10 +85,19 @@ export function StatusPopover() {
     setStore("status", reconcile(results))
   }
 
+  const refreshWebMirror = () => {
+    if (!platform.getWebMirrorStatus) return
+    platform.getWebMirrorStatus().then((status) => setStore("webMirror", status))
+  }
+
   createEffect(() => {
     servers()
     refreshHealth()
-    const interval = setInterval(refreshHealth, 10_000)
+    refreshWebMirror()
+    const interval = setInterval(() => {
+      refreshHealth()
+      refreshWebMirror()
+    }, 10_000)
     onCleanup(() => clearInterval(interval))
   })
 
@@ -288,6 +298,18 @@ export function StatusPopover() {
                     )
                   }}
                 </For>
+
+                <Show when={store.webMirror?.running && (store.webMirror?.network_url || store.webMirror?.local_url)}>
+                  <div class="flex items-center gap-2 w-full h-8 pl-3 pr-1.5 py-1.5 rounded-md text-left mt-1 border-t border-border-weak-base pt-2">
+                    <div class="size-1.5 rounded-full shrink-0 bg-icon-success-base" />
+                    <span class="text-14-regular text-text-base truncate">
+                      {language.t("status.popover.webMirror")}
+                    </span>
+                    <span class="text-12-regular text-text-weak truncate">
+                      {store.webMirror!.network_url ?? store.webMirror!.local_url}
+                    </span>
+                  </div>
+                </Show>
 
                 <Button
                   variant="secondary"

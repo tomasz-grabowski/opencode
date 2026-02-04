@@ -727,4 +727,22 @@ export const dict = {
   "workspace.reset.archived.one": "将归档 1 个会话。",
   "workspace.reset.archived.many": "将归档 {{count}} 个会话。",
   "workspace.reset.note": "这将把工作区重置为与默认分支一致。",
+
+  "status.popover.webMirror": "网页镜像",
+  "settings.general.webMirror.title": "网页镜像",
+  "settings.general.webMirror.active": "已激活",
+  "settings.general.webMirror.description":
+    "将桌面服务器暴露到本地网络。从任何浏览器访问完全相同的会话——具有实时更新的真正 1:1 镜像。",
+  "settings.general.webMirror.enabled.title": "启用网页镜像",
+  "settings.general.webMirror.enabled.description": "在桌面应用启动时自动暴露服务器",
+  "settings.general.webMirror.port.title": "端口",
+  "settings.general.webMirror.port.description": "远程访问的网络端口",
+  "settings.general.webMirror.password.title": "密码",
+  "settings.general.webMirror.password.description": "留空将自动生成随机密码",
+  "settings.general.webMirror.password.placeholder": "自动生成",
+  "settings.general.webMirror.username.title": "用户名",
+  "settings.general.webMirror.username.description": "HTTP 基本认证用户名（默认：opencode）",
+  "settings.general.webMirror.credentials.restartHint": "用户名和密码的更改将在重启应用后生效。",
+  "settings.general.webMirror.localAccess": "本地访问：",
+  "settings.general.webMirror.networkAccess": "网络访问：",
 } satisfies Partial<Record<Keys, string>>

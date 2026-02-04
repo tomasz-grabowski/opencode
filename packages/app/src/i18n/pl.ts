@@ -734,4 +734,25 @@ export const dict = {
   "workspace.reset.archived.one": "1 sesja zostanie zarchiwizowana.",
   "workspace.reset.archived.many": "{{count}} sesji zostanie zarchiwizowanych.",
   "workspace.reset.note": "To zresetuje przestrzeń roboczą, aby odpowiadała domyślnej gałęzi.",
+
+  "status.popover.webMirror": "Lustro webowe",
+  "settings.general.webMirror.title": "Lustro webowe",
+  "settings.general.webMirror.active": "AKTYWNE",
+  "settings.general.webMirror.description":
+    "Udostępnij serwer desktopowy w sieci lokalnej. Uzyskaj dostęp do tej samej sesji z dowolnej przeglądarki — prawdziwe lustro 1:1 z aktualizacjami na żywo.",
+  "settings.general.webMirror.enabled.title": "Włącz lustro webowe",
+  "settings.general.webMirror.enabled.description":
+    "Automatycznie udostępnij serwer przy uruchomieniu aplikacji desktopowej",
+  "settings.general.webMirror.port.title": "Port",
+  "settings.general.webMirror.port.description": "Port sieciowy do zdalnego dostępu",
+  "settings.general.webMirror.password.title": "Hasło",
+  "settings.general.webMirror.password.description": "Pozostaw puste, aby automatycznie wygenerować losowe hasło",
+  "settings.general.webMirror.password.placeholder": "Wygenerowane automatycznie",
+  "settings.general.webMirror.username.title": "Nazwa użytkownika",
+  "settings.general.webMirror.username.description":
+    "Nazwa użytkownika do uwierzytelniania HTTP basic (domyślnie: opencode)",
+  "settings.general.webMirror.credentials.restartHint":
+    "Zmiany nazwy użytkownika i hasła zaczną obowiązywać po ponownym uruchomieniu aplikacji.",
+  "settings.general.webMirror.localAccess": "Dostęp lokalny:",
+  "settings.general.webMirror.networkAccess": "Dostęp sieciowy:",
 }

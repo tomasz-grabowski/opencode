@@ -738,4 +738,23 @@ export const dict = {
   "workspace.reset.archived.one": "1 Sitzung wird archiviert.",
   "workspace.reset.archived.many": "{{count}} Sitzungen werden archiviert.",
   "workspace.reset.note": "Dadurch wird der Arbeitsbereich auf den Standard-Branch zurückgesetzt.",
+
+  "status.popover.webMirror": "Web-Spiegel",
+  "settings.general.webMirror.title": "Web-Spiegel",
+  "settings.general.webMirror.active": "AKTIV",
+  "settings.general.webMirror.description":
+    "Den Desktop-Server im lokalen Netzwerk freigeben. Greife von jedem Browser auf dieselbe Sitzung zu — ein echtes 1:1-Spiegelbild mit Live-Updates.",
+  "settings.general.webMirror.enabled.title": "Web-Spiegel aktivieren",
+  "settings.general.webMirror.enabled.description": "Server beim Start der Desktop-App automatisch freigeben",
+  "settings.general.webMirror.port.title": "Port",
+  "settings.general.webMirror.port.description": "Netzwerkport für den Fernzugriff",
+  "settings.general.webMirror.password.title": "Passwort",
+  "settings.general.webMirror.password.description": "Leer lassen für ein automatisch generiertes Passwort",
+  "settings.general.webMirror.password.placeholder": "Automatisch generiert",
+  "settings.general.webMirror.username.title": "Benutzername",
+  "settings.general.webMirror.username.description": "Benutzername für HTTP-Basic-Auth (Standard: opencode)",
+  "settings.general.webMirror.credentials.restartHint":
+    "Änderungen an Benutzername und Passwort werden erst nach einem Neustart der App wirksam.",
+  "settings.general.webMirror.localAccess": "Lokaler Zugriff:",
+  "settings.general.webMirror.networkAccess": "Netzwerkzugriff:",
 } satisfies Partial<Record<Keys, string>>

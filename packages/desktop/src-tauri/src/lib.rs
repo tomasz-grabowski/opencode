@@ -30,6 +30,7 @@ use crate::window_customizer::PinchZoomDisablePlugin;
 
 const SETTINGS_STORE: &str = "opencode.settings.dat";
 const DEFAULT_SERVER_URL_KEY: &str = "defaultServerUrl";
+const WEB_MIRROR_KEY: &str = "webMirror";
 
 fn window_state_flags() -> StateFlags {
     StateFlags::all() - StateFlags::DECORATIONS
@@ -65,6 +66,34 @@ impl ServerState {
 
 #[derive(Clone)]
 struct LogState(Arc<Mutex<VecDeque<String>>>);
+
+#[derive(Clone, Default, serde::Serialize, serde::Deserialize, specta::Type)]
+struct WebMirrorConfig {
+    enabled: bool,
+    port: Option<u32>,
+    username: Option<String>,
+    password: Option<String>,
+}
+
+#[derive(Clone, serde::Serialize, specta::Type)]
+struct WebMirrorStatus {
+    running: bool,
+    /// Local URL (http://localhost:<port>)
+    local_url: Option<String>,
+    /// Network URL (http://<lan-ip>:<port>) for remote access
+    network_url: Option<String>,
+    /// The resolved username used for authentication
+    username: String,
+    /// The resolved password used for authentication
+    password: String,
+    config: WebMirrorConfig,
+}
+
+struct WebMirrorState {
+    handle: Mutex<Option<tokio::task::JoinHandle<()>>>,
+    local_url: Arc<Mutex<Option<String>>>,
+    network_url: Arc<Mutex<Option<String>>>,
+}
 
 const MAX_LOG_ENTRIES: usize = 200;
 
@@ -149,6 +178,261 @@ async fn set_default_server_url(app: AppHandle, url: Option<String>) -> Result<(
     Ok(())
 }
 
+fn get_web_mirror_config(app: &AppHandle) -> WebMirrorConfig {
+    let Ok(store) = app.store(SETTINGS_STORE) else {
+        return WebMirrorConfig::default();
+    };
+    store
+        .get(WEB_MIRROR_KEY)
+        .and_then(|v| serde_json::from_value(v).ok())
+        .unwrap_or_default()
+}
+
+/// Returns the first non-internal IPv4 address, skipping Docker bridges (172.x).
+/// Mirrors the logic from `packages/opencode/src/cli/cmd/web.ts` `getNetworkIPs()`.
+fn get_network_ip() -> Option<String> {
+    let Ok(addrs) = std::net::UdpSocket::bind("0.0.0.0:0").and_then(|s| {
+        s.connect("8.8.8.8:80")?;
+        s.local_addr()
+    }) else {
+        return None;
+    };
+    let ip = addrs.ip().to_string();
+    if ip.starts_with("172.") {
+        return None;
+    }
+    Some(ip)
+}
+
+/// Try to kill any process listening on the given port.
+/// Returns true if a process was found and killed.
+fn try_kill_port_holder(port: u32) -> bool {
+    #[cfg(unix)]
+    {
+        let output = std::process::Command::new("lsof")
+            .args(["-ti", &format!(":{port}")])
+            .output();
+        if let Ok(out) = output {
+            let pids = String::from_utf8_lossy(&out.stdout);
+            for pid_str in pids.split_whitespace() {
+                if let Ok(pid) = pid_str.trim().parse::<u32>() {
+                    if pid == std::process::id() {
+                        continue;
+                    }
+                    println!("[web-mirror] Killing orphan process {pid} on port {port}");
+                    let _ = std::process::Command::new("kill")
+                        .args(["-TERM", &pid.to_string()])
+                        .output();
+                    std::thread::sleep(Duration::from_millis(500));
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
+/// Starts a TCP reverse proxy that forwards all traffic from `0.0.0.0:<port>`
+/// to the local desktop server. This gives a true 1:1 mirror — same sessions,
+/// same live updates (SSE/WebSocket), same everything — because it just pipes
+/// raw TCP bytes through without interpreting them.
+fn spawn_web_mirror_proxy(
+    target: &str,
+    config: &WebMirrorConfig,
+) -> Result<(tokio::task::JoinHandle<()>, String, Option<String>), String> {
+    let port = config.port.unwrap_or(4096);
+    let target_addr = target
+        .trim_start_matches("http://")
+        .trim_start_matches("https://")
+        .to_string();
+
+    // First attempt to bind
+    let listener = match std::net::TcpListener::bind(format!("0.0.0.0:{port}")) {
+        Ok(l) => l,
+        Err(_) => {
+            // Port occupied — try to kill orphan process and retry once
+            if try_kill_port_holder(port) {
+                std::net::TcpListener::bind(format!("0.0.0.0:{port}"))
+                    .map_err(|e| format!("Port {port} is still in use after cleanup: {e}"))?
+            } else {
+                return Err(format!(
+                    "Port {port} is already in use by another application. Choose a different port in settings."
+                ));
+            }
+        }
+    };
+    listener
+        .set_nonblocking(true)
+        .map_err(|e| format!("Failed to set non-blocking: {e}"))?;
+    let listener = tokio::net::TcpListener::from_std(listener)
+        .map_err(|e| format!("Failed to create tokio listener: {e}"))?;
+
+    let network_ip = get_network_ip();
+    let network_url = network_ip.as_ref().map(|ip| format!("http://{ip}:{port}"));
+
+    println!("[web-mirror] TCP proxy listening on 0.0.0.0:{port} -> {target_addr}");
+    if let Some(ref url) = network_url {
+        println!("[web-mirror] Network access: {url}");
+    }
+
+    let handle = tokio::spawn(async move {
+        loop {
+            let Ok((inbound, peer)) = listener.accept().await else {
+                continue;
+            };
+            let target = target_addr.clone();
+            tokio::spawn(async move {
+                let Ok(outbound) = tokio::net::TcpStream::connect(&target).await else {
+                    eprintln!("[web-mirror] failed to connect to {target} for {peer}");
+                    return;
+                };
+                let (mut ri, mut wi) = inbound.into_split();
+                let (mut ro, mut wo) = outbound.into_split();
+                let a = tokio::io::copy(&mut ri, &mut wo);
+                let b = tokio::io::copy(&mut ro, &mut wi);
+                let _ = tokio::try_join!(a, b);
+            });
+        }
+    });
+
+    let local_url = format!("http://localhost:{port}");
+    Ok((handle, local_url, network_url))
+}
+
+#[tauri::command]
+#[specta::specta]
+async fn start_web_mirror(app: AppHandle, config: WebMirrorConfig) -> Result<WebMirrorStatus, String> {
+    // Save config to store
+    let store = app
+        .store(SETTINGS_STORE)
+        .map_err(|e| format!("Failed to open settings store: {}", e))?;
+    store.set(
+        WEB_MIRROR_KEY,
+        serde_json::to_value(&config).map_err(|e| format!("Failed to serialize config: {}", e))?,
+    );
+    store.save().map_err(|e| format!("Failed to save settings: {}", e))?;
+
+    let state = app.state::<WebMirrorState>();
+
+    // Abort existing proxy if running
+    if let Some(handle) = state.handle.lock().unwrap().take() {
+        handle.abort();
+    }
+
+    let (username, password) = resolve_credentials(&config, &app);
+
+    if !config.enabled {
+        *state.local_url.lock().unwrap() = None;
+        *state.network_url.lock().unwrap() = None;
+        return Ok(WebMirrorStatus {
+            running: false,
+            local_url: None,
+            network_url: None,
+            username,
+            password,
+            config,
+        });
+    }
+
+    // Get the desktop server URL to proxy to
+    let server_state = app.state::<ServerState>();
+    let server_data = server_state
+        .status
+        .clone()
+        .await
+        .map_err(|_| "Server not ready yet".to_string())?
+        .map_err(|e| format!("Server failed: {e}"))?;
+
+    let (handle, local_url, network_url) = spawn_web_mirror_proxy(&server_data.url, &config)?;
+    *state.handle.lock().unwrap() = Some(handle);
+    *state.local_url.lock().unwrap() = Some(local_url.clone());
+    *state.network_url.lock().unwrap() = network_url.clone();
+    Ok(WebMirrorStatus {
+        running: true,
+        local_url: Some(local_url),
+        network_url,
+        username,
+        password,
+        config,
+    })
+}
+
+#[tauri::command]
+#[specta::specta]
+async fn stop_web_mirror(app: AppHandle) -> Result<(), String> {
+    let state = app.state::<WebMirrorState>();
+    if let Some(handle) = state.handle.lock().unwrap().take() {
+        handle.abort();
+    }
+    *state.local_url.lock().unwrap() = None;
+    *state.network_url.lock().unwrap() = None;
+
+    // Update config in store
+    let store = app
+        .store(SETTINGS_STORE)
+        .map_err(|e| format!("Failed to open settings store: {}", e))?;
+    let mut config = get_web_mirror_config(&app);
+    config.enabled = false;
+    store.set(
+        WEB_MIRROR_KEY,
+        serde_json::to_value(&config).map_err(|e| format!("Failed to serialize config: {}", e))?,
+    );
+    store.save().map_err(|e| format!("Failed to save settings: {}", e))?;
+    Ok(())
+}
+
+/// Resolves the server credentials using this priority:
+/// 1. Config values (user set in Settings UI)
+/// 2. Shell env vars (from .zshrc etc.)
+/// 3. Defaults (username="opencode", password=random UUID)
+fn resolve_credentials(config: &WebMirrorConfig, app: &AppHandle) -> (String, String) {
+    let username = config
+        .username
+        .clone()
+        .filter(|v| !v.is_empty())
+        .or_else(|| cli::probe_shell_env(app, "OPENCODE_SERVER_USERNAME"))
+        .unwrap_or_else(|| "opencode".to_string());
+
+    let password = config
+        .password
+        .clone()
+        .filter(|v| !v.is_empty())
+        .or_else(|| cli::probe_shell_env(app, "OPENCODE_SERVER_PASSWORD"))
+        .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+
+    (username, password)
+}
+
+#[tauri::command]
+#[specta::specta]
+fn get_web_mirror_status(app: AppHandle) -> WebMirrorStatus {
+    let state = app.state::<WebMirrorState>();
+    let running = state
+        .handle
+        .lock()
+        .unwrap()
+        .as_ref()
+        .is_some_and(|h| !h.is_finished());
+    let (local_url, network_url) = if running {
+        (
+            state.local_url.lock().unwrap().clone(),
+            state.network_url.lock().unwrap().clone(),
+        )
+    } else {
+        (None, None)
+    };
+    let config = get_web_mirror_config(&app);
+    let (username, password) = resolve_credentials(&config, &app);
+    WebMirrorStatus {
+        running,
+        local_url,
+        network_url,
+        username,
+        password,
+        config,
+    }
+}
+
 fn get_sidecar_port() -> u32 {
     option_env!("OPENCODE_PORT")
         .map(|s| s.to_string())
@@ -167,14 +451,28 @@ fn spawn_sidecar(app: &AppHandle, hostname: &str, port: u32, password: &str) -> 
     let log_state = app.state::<LogState>();
     let log_state_clone = log_state.inner().clone();
 
-    println!("spawning sidecar on port {port}");
+    let mirror_config = get_web_mirror_config(app);
+    let (username, _) = resolve_credentials(&mirror_config, app);
 
-    let (mut rx, child) = cli::create_command(
+    // Resolve the bundled web UI directory for the sidecar to serve
+    let web_dir = app
+        .path()
+        .resolve("web-ui", tauri::path::BaseDirectory::Resource)
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_default();
+
+    println!("spawning sidecar on port {port} with username={username} web_dir={web_dir}");
+
+    // Always inline credentials + web dir so they override anything the shell config sets
+    let (mut rx, child) = cli::create_command_with_env(
         app,
         format!("serve --hostname {hostname} --port {port}").as_str(),
+        &[
+            ("OPENCODE_SERVER_USERNAME", &username),
+            ("OPENCODE_SERVER_PASSWORD", password),
+            ("OPENCODE_WEB_DIR", &web_dir),
+        ],
     )
-    .env("OPENCODE_SERVER_USERNAME", "opencode")
-    .env("OPENCODE_SERVER_PASSWORD", password)
     .spawn()
     .expect("Failed to spawn opencode");
 
@@ -269,6 +567,9 @@ pub fn run() {
             ensure_server_ready,
             get_default_server_url,
             set_default_server_url,
+            start_web_mirror,
+            stop_web_mirror,
+            get_web_mirror_status,
             markdown::parse_markdown_command
         ])
         .error_handling(tauri_specta::ErrorHandlingMode::Throw);
@@ -322,6 +623,13 @@ pub fn run() {
 
             // Initialize log state
             app.manage(LogState(Arc::new(Mutex::new(VecDeque::new()))));
+
+            // Initialize web mirror state
+            app.manage(WebMirrorState {
+                handle: Mutex::new(None),
+                local_url: Arc::new(Mutex::new(None)),
+                network_url: Arc::new(Mutex::new(None)),
+            });
 
             #[cfg(windows)]
             app.manage(JobObjectState::new());
@@ -408,6 +716,27 @@ pub fn run() {
                         Err(e) => Err(e),
                     };
 
+                    // Auto-start web mirror if server is ready and mirror is enabled
+                    if let Ok(ref server_data) = res {
+                        let mirror_config = get_web_mirror_config(&app);
+                        if mirror_config.enabled {
+                            println!("Auto-starting web mirror proxy");
+                            match spawn_web_mirror_proxy(&server_data.url, &mirror_config) {
+                                Ok((handle, local_url, network_url)) => {
+                                    let state = app.state::<WebMirrorState>();
+                                    *state.handle.lock().unwrap() = Some(handle);
+                                    *state.local_url.lock().unwrap() = Some(local_url.clone());
+                                    *state.network_url.lock().unwrap() = network_url.clone();
+                                    println!("Web mirror proxy started at {local_url}");
+                                    if let Some(ref url) = network_url {
+                                        println!("Web mirror network access: {url}");
+                                    }
+                                }
+                                Err(e) => eprintln!("Failed to auto-start web mirror proxy: {e}"),
+                            }
+                        }
+                    }
+
                     let _ = tx.send(res);
                 });
             }
@@ -434,6 +763,14 @@ pub fn run() {
         .run(|app, event| {
             if let RunEvent::Exit = event {
                 println!("Received Exit");
+
+                // Stop web mirror proxy if running
+                if let Some(state) = app.try_state::<WebMirrorState>() {
+                    if let Some(handle) = state.handle.lock().unwrap().take() {
+                        handle.abort();
+                        println!("Stopped web mirror proxy");
+                    }
+                }
 
                 kill_sidecar(app.clone());
             }
@@ -514,7 +851,9 @@ async fn setup_server_connection(
     let local_url = format!("http://{hostname}:{local_port}");
 
     if !check_server_health(&local_url, None).await {
-        let password = uuid::Uuid::new_v4().to_string();
+        // Resolve credentials: Config (Settings UI) → Shell env → generated UUID
+        let mirror_config = get_web_mirror_config(app);
+        let (_, password) = resolve_credentials(&mirror_config, app);
 
         match spawn_local_server(app, hostname, local_port, &password).await {
             Ok(child) => Ok((

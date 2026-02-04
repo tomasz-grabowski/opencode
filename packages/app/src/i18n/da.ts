@@ -732,4 +732,24 @@ export const dict = {
   "workspace.reset.archived.one": "1 session vil blive arkiveret.",
   "workspace.reset.archived.many": "{{count}} sessioner vil blive arkiveret.",
   "workspace.reset.note": "Dette vil nulstille arbejdsområdet til at matche hovedgrenen.",
+
+  "status.popover.webMirror": "Webspejl",
+  "settings.general.webMirror.title": "Webspejl",
+  "settings.general.webMirror.active": "AKTIV",
+  "settings.general.webMirror.description":
+    "Eksponer desktopserveren til dit lokale netværk. Tilgå den samme session fra enhver browser — et ægte 1:1-spejl med live-opdateringer.",
+  "settings.general.webMirror.enabled.title": "Aktiver webspejl",
+  "settings.general.webMirror.enabled.description": "Eksponer automatisk serveren, når desktopappen starter",
+  "settings.general.webMirror.port.title": "Port",
+  "settings.general.webMirror.port.description": "Netværksport til fjernadgang",
+  "settings.general.webMirror.password.title": "Adgangskode",
+  "settings.general.webMirror.password.description":
+    "Lad feltet være tomt for at autogenerere en tilfældig adgangskode",
+  "settings.general.webMirror.password.placeholder": "Autogenereret",
+  "settings.general.webMirror.username.title": "Brugernavn",
+  "settings.general.webMirror.username.description": "Brugernavn til HTTP basic-godkendelse (standard: opencode)",
+  "settings.general.webMirror.credentials.restartHint":
+    "Ændringer af brugernavn og adgangskode træder i kraft efter genstart af appen.",
+  "settings.general.webMirror.localAccess": "Lokal adgang:",
+  "settings.general.webMirror.networkAccess": "Netværksadgang:",
 }

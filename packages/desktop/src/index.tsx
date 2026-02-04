@@ -346,6 +346,12 @@ const createPlatform = (password: Accessor<string | null>): Platform => ({
   parseMarkdown: (markdown: string) => commands.parseMarkdownCommand(markdown),
 
   webviewZoom,
+
+  startWebMirror: (config) => commands.startWebMirror(config),
+  stopWebMirror: async () => {
+    await commands.stopWebMirror()
+  },
+  getWebMirrorStatus: () => commands.getWebMirrorStatus(),
 })
 
 createMenu()

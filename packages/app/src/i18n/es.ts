@@ -738,4 +738,26 @@ export const dict = {
   "workspace.reset.archived.one": "1 sesión será archivada.",
   "workspace.reset.archived.many": "{{count}} sesiones serán archivadas.",
   "workspace.reset.note": "Esto restablecerá el espacio de trabajo para coincidir con la rama predeterminada.",
+
+  "status.popover.webMirror": "Espejo web",
+  "settings.general.webMirror.title": "Espejo web",
+  "settings.general.webMirror.active": "ACTIVO",
+  "settings.general.webMirror.description":
+    "Exponer el servidor de escritorio en tu red local. Accede a la misma sesión desde cualquier navegador — un espejo 1:1 real con actualizaciones en vivo.",
+  "settings.general.webMirror.enabled.title": "Activar espejo web",
+  "settings.general.webMirror.enabled.description":
+    "Exponer automáticamente el servidor al iniciar la aplicación de escritorio",
+  "settings.general.webMirror.port.title": "Puerto",
+  "settings.general.webMirror.port.description": "Puerto de red para acceso remoto",
+  "settings.general.webMirror.password.title": "Contraseña",
+  "settings.general.webMirror.password.description":
+    "Dejar vacío para generar automáticamente una contraseña aleatoria",
+  "settings.general.webMirror.password.placeholder": "Auto-generada",
+  "settings.general.webMirror.username.title": "Nombre de usuario",
+  "settings.general.webMirror.username.description":
+    "Nombre de usuario para autenticación HTTP básica (predeterminado: opencode)",
+  "settings.general.webMirror.credentials.restartHint":
+    "Los cambios de nombre de usuario y contraseña surten efecto después de reiniciar la aplicación.",
+  "settings.general.webMirror.localAccess": "Acceso local:",
+  "settings.general.webMirror.networkAccess": "Acceso de red:",
 }

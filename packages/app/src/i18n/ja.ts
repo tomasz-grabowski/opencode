@@ -726,4 +726,23 @@ export const dict = {
   "workspace.reset.archived.one": "1つのセッションがアーカイブされます。",
   "workspace.reset.archived.many": "{{count}}個のセッションがアーカイブされます。",
   "workspace.reset.note": "これにより、ワークスペースはデフォルトブランチと一致するようにリセットされます。",
+
+  "status.popover.webMirror": "Webミラー",
+  "settings.general.webMirror.title": "Webミラー",
+  "settings.general.webMirror.active": "アクティブ",
+  "settings.general.webMirror.description":
+    "デスクトップサーバーをローカルネットワークに公開します。どのブラウザからでも同じセッションにアクセスでき、ライブ更新付きの完全な1:1ミラーです。",
+  "settings.general.webMirror.enabled.title": "Webミラーを有効にする",
+  "settings.general.webMirror.enabled.description": "デスクトップアプリ起動時にサーバーを自動的に公開する",
+  "settings.general.webMirror.port.title": "ポート",
+  "settings.general.webMirror.port.description": "リモートアクセス用のネットワークポート",
+  "settings.general.webMirror.password.title": "パスワード",
+  "settings.general.webMirror.password.description": "空のままにするとランダムなパスワードが自動生成されます",
+  "settings.general.webMirror.password.placeholder": "自動生成",
+  "settings.general.webMirror.username.title": "ユーザー名",
+  "settings.general.webMirror.username.description": "HTTP基本認証のユーザー名（デフォルト：opencode）",
+  "settings.general.webMirror.credentials.restartHint":
+    "ユーザー名とパスワードの変更はアプリを再起動した後に反映されます。",
+  "settings.general.webMirror.localAccess": "ローカルアクセス：",
+  "settings.general.webMirror.networkAccess": "ネットワークアクセス：",
 }

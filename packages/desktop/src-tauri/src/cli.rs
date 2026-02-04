@@ -145,32 +145,82 @@ fn get_user_shell() -> String {
     std::env::var("SHELL").unwrap_or_else(|_| "/bin/sh".to_string())
 }
 
+/// Probes the user's interactive login shell to read an env var value.
+/// This is needed because the sidecar runs via `zsh -il -c "..."` which sources
+/// `.zshrc`/`.bashrc`, and those may set env vars that the Tauri parent process
+/// doesn't have (e.g. when launched from Finder).
+pub fn probe_shell_env(_app: &tauri::AppHandle, var: &str) -> Option<String> {
+    let shell = get_user_shell();
+    let cmd = format!("echo ${var}");
+    let output = std::process::Command::new(&shell)
+        .args(["-il", "-c", &cmd])
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::null())
+        .output()
+        .ok()?;
+    let value = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    if value.is_empty() { None } else { Some(value) }
+}
+
 pub fn create_command(app: &tauri::AppHandle, args: &str) -> Command {
+    create_command_with_env(app, args, &[])
+}
+
+/// Like `create_command`, but injects additional env vars into the shell command.
+/// On macOS/Linux the sidecar runs via an interactive login shell (`zsh -il -c "..."`),
+/// which sources `.zshrc`/`.bashrc` and can override values set via `.env()`.
+/// By inlining env vars into the `-c` command string they are set AFTER the shell
+/// config is sourced, guaranteeing the correct values.
+pub fn create_command_with_env(
+    app: &tauri::AppHandle,
+    args: &str,
+    extra_env: &[(&str, &str)],
+) -> Command {
     let state_dir = app
         .path()
         .resolve("", BaseDirectory::AppLocalData)
         .expect("Failed to resolve app local data dir");
 
     #[cfg(target_os = "windows")]
-    return app
-        .shell()
-        .sidecar("opencode-cli")
-        .unwrap()
-        .args(args.split_whitespace())
-        .env("OPENCODE_EXPERIMENTAL_ICON_DISCOVERY", "true")
-        .env("OPENCODE_EXPERIMENTAL_FILEWATCHER", "true")
-        .env("OPENCODE_CLIENT", "desktop")
-        .env("XDG_STATE_HOME", &state_dir);
+    return {
+        let mut cmd = app
+            .shell()
+            .sidecar("opencode-cli")
+            .unwrap()
+            .args(args.split_whitespace())
+            .env("OPENCODE_EXPERIMENTAL_ICON_DISCOVERY", "true")
+            .env("OPENCODE_EXPERIMENTAL_FILEWATCHER", "true")
+            .env("OPENCODE_CLIENT", "desktop")
+            .env("XDG_STATE_HOME", &state_dir);
+        for (key, value) in extra_env {
+            cmd = cmd.env(key, value);
+        }
+        cmd
+    };
 
     #[cfg(not(target_os = "windows"))]
     return {
         let sidecar = get_sidecar_path(app);
         let shell = get_user_shell();
 
-        let cmd = if shell.ends_with("/nu") {
-            format!("^\"{}\" {}", sidecar.display(), args)
+        // Build inline env prefix (e.g. "FOO=bar BAZ=qux") so the vars are set
+        // after the shell's login config has been sourced.
+        let env_prefix = extra_env
+            .iter()
+            .map(|(k, v)| format!("{}=\"{}\"", k, v.replace('"', "\\\"")))
+            .collect::<Vec<_>>()
+            .join(" ");
+
+        let binary = if shell.ends_with("/nu") {
+            format!("^\"{}\"", sidecar.display())
         } else {
-            format!("\"{}\" {}", sidecar.display(), args)
+            format!("\"{}\"", sidecar.display())
+        };
+
+        let cmd = if env_prefix.is_empty() {
+            format!("{binary} {args}")
+        } else {
+            format!("{env_prefix} {binary} {args}")
         };
 
         app.shell()

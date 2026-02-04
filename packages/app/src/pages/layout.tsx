@@ -2598,17 +2598,18 @@ export default function Layout(props: ParentProps) {
   }
 
   const LocalWorkspace = (props: { project: LocalProject; mobile?: boolean }): JSX.Element => {
-    const [workspaceStore, setWorkspaceStore] = globalSync.child(props.project.worktree)
+    const childStore = createMemo(() => globalSync.child(props.project.worktree))
     const slug = createMemo(() => base64Encode(props.project.worktree))
     const sessions = createMemo(() =>
-      workspaceStore.session
-        .filter((session) => session.directory === workspaceStore.path.directory)
+      childStore()[0]
+        .session.filter((session) => session.directory === childStore()[0].path.directory)
         .filter((session) => !session.parentID && !session.time?.archived)
         .toSorted(sortSessions(Date.now())),
     )
     const children = createMemo(() => {
+      const [store] = childStore()
       const map = new Map<string, string[]>()
-      for (const session of workspaceStore.session) {
+      for (const session of store.session) {
         if (!session.parentID) continue
         const existing = map.get(session.parentID)
         if (existing) {
@@ -2619,11 +2620,11 @@ export default function Layout(props: ParentProps) {
       }
       return map
     })
-    const booted = createMemo((prev) => prev || workspaceStore.status === "complete", false)
+    const booted = createMemo((prev) => prev || childStore()[0].status === "complete", false)
     const loading = createMemo(() => !booted() && sessions().length === 0)
-    const hasMore = createMemo(() => workspaceStore.sessionTotal > sessions().length)
+    const hasMore = createMemo(() => childStore()[0].sessionTotal > sessions().length)
     const loadMore = async () => {
-      setWorkspaceStore("limit", (limit) => limit + 5)
+      childStore()[1]("limit", (limit) => limit + 5)
       await globalSync.project.loadSessions(props.project.worktree)
     }
 
@@ -2951,25 +2952,27 @@ export default function Layout(props: ParentProps) {
                     {(project) => <SortableProject project={project} mobile={sidebarProps.mobile} />}
                   </For>
                 </SortableProvider>
-                <Tooltip
-                  placement={sidebarProps.mobile ? "bottom" : "right"}
-                  value={
-                    <div class="flex items-center gap-2">
-                      <span>{language.t("command.project.open")}</span>
-                      <Show when={!sidebarProps.mobile}>
-                        <span class="text-icon-base text-12-medium">{command.keybind("project.open")}</span>
-                      </Show>
-                    </div>
-                  }
-                >
-                  <IconButton
-                    icon="plus"
-                    variant="ghost"
-                    size="large"
-                    onClick={chooseProject}
-                    aria-label={language.t("command.project.open")}
-                  />
-                </Tooltip>
+                <Show when={platform.storage}>
+                  <Tooltip
+                    placement={sidebarProps.mobile ? "bottom" : "right"}
+                    value={
+                      <div class="flex items-center gap-2">
+                        <span>{language.t("command.project.open")}</span>
+                        <Show when={!sidebarProps.mobile}>
+                          <span class="text-icon-base text-12-medium">{command.keybind("project.open")}</span>
+                        </Show>
+                      </div>
+                    }
+                  >
+                    <IconButton
+                      icon="plus"
+                      variant="ghost"
+                      size="large"
+                      onClick={chooseProject}
+                      aria-label={language.t("command.project.open")}
+                    />
+                  </Tooltip>
+                </Show>
               </div>
               <DragOverlay>
                 <ProjectDragOverlay />

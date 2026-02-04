@@ -246,39 +246,41 @@ export function SessionHeader() {
                   </Show>
                 </div>
               </Show>
-              <div class="hidden md:flex items-center gap-3 ml-2 shrink-0">
-                <TooltipKeybind
-                  title={language.t("command.terminal.toggle")}
-                  keybind={command.keybind("terminal.toggle")}
-                >
-                  <Button
-                    variant="ghost"
-                    class="group/terminal-toggle size-6 p-0"
-                    onClick={() => view().terminal.toggle()}
-                    aria-label={language.t("command.terminal.toggle")}
-                    aria-expanded={view().terminal.opened()}
-                    aria-controls="terminal-panel"
+              <Show when={platform.storage}>
+                <div class="hidden md:flex items-center gap-3 ml-2 shrink-0">
+                  <TooltipKeybind
+                    title={language.t("command.terminal.toggle")}
+                    keybind={command.keybind("terminal.toggle")}
                   >
-                    <div class="relative flex items-center justify-center size-4 [&>*]:absolute [&>*]:inset-0">
-                      <Icon
-                        size="small"
-                        name={view().terminal.opened() ? "layout-bottom-full" : "layout-bottom"}
-                        class="group-hover/terminal-toggle:hidden"
-                      />
-                      <Icon
-                        size="small"
-                        name="layout-bottom-partial"
-                        class="hidden group-hover/terminal-toggle:inline-block"
-                      />
-                      <Icon
-                        size="small"
-                        name={view().terminal.opened() ? "layout-bottom" : "layout-bottom-full"}
-                        class="hidden group-active/terminal-toggle:inline-block"
-                      />
-                    </div>
-                  </Button>
-                </TooltipKeybind>
-              </div>
+                    <Button
+                      variant="ghost"
+                      class="group/terminal-toggle size-6 p-0"
+                      onClick={() => view().terminal.toggle()}
+                      aria-label={language.t("command.terminal.toggle")}
+                      aria-expanded={view().terminal.opened()}
+                      aria-controls="terminal-panel"
+                    >
+                      <div class="relative flex items-center justify-center size-4 [&>*]:absolute [&>*]:inset-0">
+                        <Icon
+                          size="small"
+                          name={view().terminal.opened() ? "layout-bottom-full" : "layout-bottom"}
+                          class="group-hover/terminal-toggle:hidden"
+                        />
+                        <Icon
+                          size="small"
+                          name="layout-bottom-partial"
+                          class="hidden group-hover/terminal-toggle:inline-block"
+                        />
+                        <Icon
+                          size="small"
+                          name={view().terminal.opened() ? "layout-bottom" : "layout-bottom-full"}
+                          class="hidden group-active/terminal-toggle:inline-block"
+                        />
+                      </div>
+                    </Button>
+                  </TooltipKeybind>
+                </div>
+              </Show>
               <div class="hidden md:block shrink-0">
                 <TooltipKeybind title={language.t("command.review.toggle")} keybind={command.keybind("review.toggle")}>
                   <Button
