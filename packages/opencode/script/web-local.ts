@@ -8,7 +8,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const root = path.resolve(__dirname, "../../..")
 const appDir = path.join(root, "packages/app")
 const distDir = path.join(appDir, "dist")
-const opencode = path.join(root, "packages/opencode/dist/opencode-darwin-arm64/bin/opencode")
+
+// Detect platform-specific binary path
+const platform = process.platform === "win32" ? "windows" : process.platform
+const arch = process.arch
+const binaryName = process.platform === "win32" ? "opencode.exe" : "opencode"
+const opencode = path.join(root, `packages/opencode/dist/opencode-${platform}-${arch}/bin/${binaryName}`)
 
 const APP_PORT = 5173
 const forceBuild = process.argv.includes("--build")
